@@ -105,6 +105,23 @@
         background: #2563eb;
         color: #fff;
       }
+
+      /* New styles for logout button */
+      .logout-btn {
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.6rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      .logout-btn:hover {
+        background: #dc2626;
+      }
     </style>
   </head>
   <body>
@@ -115,6 +132,8 @@
         <button data-section="trade">Trade</button>
         <button data-section="wallet">View Wallet</button>
       </nav>
+      <!-- New Log out button in top right corner -->
+      <button class="logout-btn" id="logout-btn">Log out</button>
     </header>
 
     <main id="deposit" class="active">
@@ -185,6 +204,29 @@
           sections.forEach((section) => section.classList.remove('active'));
           document.getElementById(button.dataset.section).classList.add('active');
         });
+      });
+
+      // New logout functionality
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn.addEventListener('click', async () => {
+        if (window.ethereum) {
+          try {
+            // Attempt to revoke permissions (works with some wallets like MetaMask)
+            await window.ethereum.request({
+              method: 'wallet_revokePermissions',
+              params: [{ eth_accounts: {} }],
+            });
+          } catch (error) {
+            console.error('Failed to revoke permissions:', error);
+          }
+        }
+
+        // Clear any local storage or session data related to connection
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Redirect to index.html
+        window.location.href = 'index.html';
       });
 
       const { createChart, CrosshairMode } = await import('https://unpkg.com/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js');
