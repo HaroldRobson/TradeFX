@@ -1,35 +1,46 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+import TradingInterface from "./components/TradingInterface";
+import WalletAuth from "./components/WalletAuth";
+import OnrampPayment from "./components/OnrampPayment";
+import { ConnectWallet } from "@thirdweb-dev/react";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [activeTab, setActiveTab] = useState("trade");
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="App">
+      <header className="App-header">
+        <h1>TradeFX</h1>
+        <ConnectWallet />
+      </header>
+      <nav className="tabs">
+        <button
+          className={activeTab === "trade" ? "active" : ""}
+          onClick={() => setActiveTab("trade")}
+        >
+          Trade
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+        <button
+          className={activeTab === "wallet" ? "active" : ""}
+          onClick={() => setActiveTab("wallet")}
+        >
+          Wallet
+        </button>
+        <button
+          className={activeTab === "onramp" ? "active" : ""}
+          onClick={() => setActiveTab("onramp")}
+        >
+          Buy Crypto
+        </button>
+      </nav>
+      <main className="content">
+        {activeTab === "trade" && <TradingInterface />}
+        {activeTab === "wallet" && <WalletAuth />}
+        {activeTab === "onramp" && <OnrampPayment />}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;

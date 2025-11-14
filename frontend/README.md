@@ -1,16 +1,75 @@
-# React + Vite
+# TradeFX - Web3 Trading Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Setup Instructions
 
-Currently, two official plugins are available:
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 2. Configure Environment Variables
 
-## React Compiler
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Then update the following values in `.env`:
 
-## Expanding the ESLint configuration
+- **VITE_THIRDWEB_CLIENT_ID**: Get your client ID from [Thirdweb Dashboard](https://thirdweb.com/dashboard)
+  1. Go to https://thirdweb.com/dashboard
+  2. Create a new project or select existing one
+  3. Copy your Client ID
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **VITE_ARC_API_KEY**: Get your API key from [Arc](https://arc.market)
+  1. Sign up at https://arc.market
+  2. Navigate to API settings
+  3. Generate and copy your API key
+
+### 3. Run Development Server
+```bash
+npm run dev
+```
+
+## Features
+
+### Embedded Wallets
+- **Email Authentication**: Sign in with email
+- **Social Login**: Google and Apple authentication
+- **Passkey Support**: Passwordless authentication using passkeys
+- Powered by Thirdweb's embedded wallet infrastructure
+
+### Onramp Integration
+- **Buy USDT with EUR**: Purchase USDT directly with Euros
+- **Arc Payment Gateway**: Secure fiat-to-crypto onramp
+- **Ethereum Network**: USDT on Ethereum mainnet
+
+## Project Structure
+```
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── WalletAuth.jsx      # Wallet connection & authentication
+│   │   └── OnrampPayment.jsx   # USDT purchase with EUR
+│   ├── App.jsx                  # Main application component
+│   └── main.jsx                 # Entry point with ThirdwebProvider
+├── .env                         # Environment variables (not in git)
+├── .env.example                 # Environment variables template
+└── package.json
+```
+
+## Usage
+
+1. **Connect Wallet**: Click "Connect Wallet" and choose your preferred authentication method (Email, Google, Apple, or Passkey)
+2. **Buy USDT**: Navigate to "Buy USDT" tab, enter amount in EUR, and complete purchase through Arc gateway
+
+## Technologies Used
+- React + Vite
+- Thirdweb SDK (Embedded Wallets)
+- Arc (Onramp Integration)
+- Ethers.js
+
+## Support
+For issues or questions, please refer to:
+- [Thirdweb Documentation](https://portal.thirdweb.com/)
+- [Arc Documentation](https://docs.arc.market/)
