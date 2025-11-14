@@ -12,7 +12,17 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>TradeFX</h1>
-        <ConnectWallet />
+        <ConnectWallet
+          modalTitle="Connect your wallet"
+          modalTitleIconUrl="/"
+          welcomeScreen={{
+            title: "TradeFX",
+            subtitle: "Securely connect your wallet",
+            subtitle2: "",
+          }}
+          termsOfServiceUrl="https://tradefx.example.com/terms"
+          privacyPolicyUrl="https://tradefx.example.com/privacy"
+        />
       </header>
       <nav className="tabs">
         <button
