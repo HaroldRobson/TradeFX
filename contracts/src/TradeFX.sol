@@ -107,6 +107,16 @@ function checkSolvency(uint256 position_id, FakeRate) view returns (Solvency) {
         
 }
 
+function calculateLiquidatorFee(uint256 position_id, FakeRate) view returns (uint256) {
+       if (checkSolvency(position_id, FakeRate) == Solvency.SOLVENT) {
+               return 0;
+       }
+       uint256
+       if (checkSolvency(position_id, FakeRate) == Solvency.SOLVENT) {
+               return 0;
+       }
+}
+
 function calculateFeesOwed(uint256 position_id) view returns (uint256) {// ie how much of the collateral will go as fees
         uint256 time_elapsed = block.timestamp - IDToPosition[position_id].block_timestamp;
         uint256 borrowed = IDToPosition[position_id].borrowed;
@@ -233,6 +243,38 @@ function liquidate(uint256 position_id, uint256 FakeRate) public {
                 return
         }
         require(checkSolvency(position_id, FakeRate) == Solvency.LIQUIDATABLE, "Cannot Liquidate");
+
+        uint256[] storage user_pos_arr = UserPositions[msg.sender];
+
+        if (user_pos_arr.length == 1) {
+                delete UserPositions[msg.sender];
+        } else {
+                for (uint256 i = 0; i < user_pos_arr.length; i++) {
+                        if (user_pos_arr[i] == position_id) {
+                                user_pos_arr[i] = user_pos_arr[user_pos_arr.length - 1];
+                                user_pos_arr.pop();
+                                UserPositions[msg.sender] = user_pos_arr;
+                        }
+                }
+        }
+
+        uint256 amount = engine.swapExactTokensForTokens(IDToPositions[position_id].pos_token, IDToPositions[position_id].start_token, IDToPositions[position_id].pos_token_amount, address(this), FakeRate);
+
+        if (IDToPositions[position_id].pos_token == USDC) {
+                USDCInUse = USDCInUse - IDToPositions[position_id].pos_token_amount;
+                EURCCollateral = EURCCollateral - IDToPositions[position_id].collateral;
+        }
+
+        if (IDToPositions[position_id].pos_token == EURC) {
+                EURCInUse = EURCInUse - IDToPositions[position_id].pos_token_amount;
+                USDCCollateral = USDCCollateral - IDToPositions[position_id].collateral;
+        }
+        // calculate how much to return to user.
+
+       uint256 return_amount = amount - calculateFeesOwed(position_id);
+       IDToPositions[position_id].user.transfer(return_amount);
+
+
 
 }
 
