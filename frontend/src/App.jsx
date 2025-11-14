@@ -1,9 +1,10 @@
+import { ConnectWallet } from "@thirdweb-dev/react";
 import { useState } from "react";
 import "./App.css";
+import ExchangeChart from "./components/ExchangeChart";
+import OnrampPayment from "./components/OnrampPayment";
 import TradingInterface from "./components/TradingInterface";
 import WalletAuth from "./components/WalletAuth";
-import OnrampPayment from "./components/OnrampPayment";
-import { ConnectWallet } from "@thirdweb-dev/react";
 
 function App() {
   const [activeTab, setActiveTab] = useState("trade");
@@ -45,7 +46,12 @@ function App() {
         </button>
       </nav>
       <main className="content">
-        {activeTab === "trade" && <TradingInterface />}
+        {activeTab === "trade" && (
+          <div className="trade-layout">
+            <ExchangeChart />
+            <TradingInterface />
+          </div>
+        )}
         {activeTab === "wallet" && <WalletAuth />}
         {activeTab === "onramp" && <OnrampPayment />}
       </main>

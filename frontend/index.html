@@ -2,16 +2,330 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Trade FX - Professional Web3 Trading Platform with Embedded Wallets" />
-    <title>Trade FX - Web3 Trading Platform</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="TradeFX - Institutional FX trading with USDT and EURC" />
+    <title>TradeFX - Connect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: #0f172a;
+        background-color: #eff6ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #dbeafe, #eff6ff);
+        color: inherit;
+      }
+
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        padding: 2.5rem 1.25rem;
+        text-align: center;
+      }
+
+      .hero h1 {
+        font-size: clamp(2.1rem, 5vw, 3.6rem);
+        margin: 0;
+      }
+
+      .hero p {
+        max-width: 540px;
+        color: #475569;
+        margin: 0;
+        font-size: 1.15rem;
+      }
+
+      .connect-btn {
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.9rem 2.75rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 25px 50px rgba(37, 99, 235, 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .connect-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 35px 70px rgba(37, 99, 235, 0.45);
+      }
+
+      .chart-card {
+        width: min(960px, 100%);
+        background: #fff;
+        border-radius: 1.25rem;
+        padding: 1.75rem;
+        box-shadow: 0 35px 80px rgba(15, 23, 42, 0.15);
+      }
+
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .chart-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+
+      .chart-header p {
+        margin: 0.35rem 0 0;
+        color: #94a3b8;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .control-group {
+        display: inline-flex;
+        background: #f1f5f9;
+        padding: 0.25rem;
+        border-radius: 999px;
+        gap: 0.25rem;
+      }
+
+      .control-group button {
+        border: none;
+        border-radius: 999px;
+        background: transparent;
+        color: #475569;
+        padding: 0.4rem 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .control-group button.active {
+        background: #2563eb;
+        color: #fff;
+      }
+
+      #chart-status {
+        margin-top: 1.25rem;
+        font-size: 0.95rem;
+        color: #475569;
+      }
+
+      #landing-chart {
+        margin-top: 1rem;
+        width: 100%;
+        height: 360px;
+      }
+
+      @media (max-width: 640px) {
+        .chart-card {
+          padding: 1.25rem;
+        }
+
+        #landing-chart {
+          height: 260px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <section class="hero">
+      <div>
+        <h1>Trade FX with USDC and EURC</h1>
+        <p>
+          Monitor real-time USDC / EURC markets and unlock the full TradeFX terminal once your wallet is
+          connected.
+        </p>
+      </div>
+      <button class="connect-btn" id="connect-btn">Connect Wallet</button>
+      <article class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h2 id="pair-label">USDC  EURC</h2>
+            <p id="price-label">Loading</p>
+          </div>
+          <div class="controls">
+            <div class="control-group" id="pair-controls">
+              <button data-pair="USDC_EURC" class="active">USDC / EURC</button>
+              <button data-pair="EURC_USDC">EURC / USDC</button>
+            </div>
+            <div class="control-group" id="type-controls">
+              <button data-type="line" class="active">Line</button>
+              <button data-type="candles">Candles</button>
+            </div>
+          </div>
+        </div>
+        <div id="chart-status">Loading chart</div>
+        <div id="landing-chart"></div>
+      </article>
+    </section>
+
+    <script type="module">
+      const connectBtn = document.getElementById("connect-btn");
+      connectBtn.addEventListener("click", async () => {
+        if (!window.ethereum) {
+          alert("Please install a Web3 wallet like MetaMask to continue.");
+          return;
+        }
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          window.location.href = "/main.html";
+        } catch (error) {
+          console.error("Wallet connection cancelled", error);
+        }
+      });
+
+      const statusEl = document.getElementById("chart-status");
+      const pairLabel = document.getElementById("pair-label");
+      const priceLabel = document.getElementById("price-label");
+      const pairButtons = document.querySelectorAll("#pair-controls button");
+      const typeButtons = document.querySelectorAll("#type-controls button");
+      let selectedPair = "USDC_EURC";
+      let chartMode = "line";
+
+      const initChart = async () => {
+        const { createChart, CrosshairMode } = await import(
+          "https://unpkg.com/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js"
+        );
+        const container = document.getElementById("landing-chart");
+        const chart = createChart(container, {
+          layout: {
+            background: { type: "solid", color: "transparent" },
+            textColor: "#0f172a",
+          },
+          grid: {
+            horzLines: { color: "rgba(15,23,42,0.12)" },
+            vertLines: { color: "rgba(15,23,42,0.12)" },
+          },
+          crosshair: { mode: CrosshairMode.Normal },
+          width: container.clientWidth,
+          height: container.clientHeight,
+        });
+
+        const resizeObserver = new ResizeObserver((entries) => {
+          entries.forEach((entry) => {
+            chart.applyOptions({
+              width: entry.contentRect.width,
+              height: entry.contentRect.height,
+            });
+          });
+        });
+        resizeObserver.observe(container);
+
+        let currentSeries = null;
+
+        const buildCandles = (lineData) => {
+          const candles = [];
+          for (let i = 0; i < lineData.length - 3; i += 4) {
+            const slice = lineData.slice(i, i + 4);
+            candles.push({
+              time: slice[0].time,
+              open: slice[0].value,
+              high: Math.max(...slice.map((p) => p.value)),
+              low: Math.min(...slice.map((p) => p.value)),
+              close: slice[slice.length - 1].value,
+            });
+          }
+          return candles;
+        };
+
+        const applyData = (lineData) => {
+          if (!lineData.length) return;
+          if (currentSeries) {
+            chart.removeSeries(currentSeries);
+          }
+          if (chartMode === "line") {
+            currentSeries = chart.addAreaSeries({
+              topColor: "rgba(37,99,235,0.4)",
+              bottomColor: "rgba(37,99,235,0.05)",
+              lineColor: "#2563eb",
+              lineWidth: 2,
+            });
+            currentSeries.setData(lineData);
+          } else {
+            currentSeries = chart.addCandlestickSeries({
+              upColor: "#22c55e",
+              downColor: "#ef4444",
+              borderDownColor: "#ef4444",
+              borderUpColor: "#22c55e",
+              wickDownColor: "#ef4444",
+              wickUpColor: "#22c55e",
+            });
+            currentSeries.setData(buildCandles(lineData));
+          }
+          chart.timeScale().fitContent();
+        };
+
+        const loadData = async () => {
+          statusEl.textContent = "Loading chart";
+          try {
+            const response = await fetch(
+              "https://api.coingecko.com/api/v3/coins/tether/market_chart?vs_currency=eur&days=2&interval=hourly"
+            );
+            if (!response.ok) throw new Error("Rate request failed");
+            const payload = await response.json();
+            const prices = (payload.prices || []).map(([timestamp, value]) => ({
+              time: Math.floor(timestamp / 1000),
+              value: selectedPair === "USDC_EURC" ? value : 1 / value,
+            }));
+            if (!prices.length) throw new Error("No rates available");
+            const latest = prices[prices.length - 1].value;
+            pairLabel.textContent = selectedPair === "USDT_EURC" ? "USDC  EURC" : "EURC  USDC";
+            priceLabel.textContent = latest.toFixed(4);
+            applyData(prices);
+            statusEl.textContent = "";
+          } catch (err) {
+            console.error(err);
+            statusEl.textContent = "Failed to load chart data";
+          }
+        };
+
+        pairButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            pairButtons.forEach((btn) => btn.classList.remove("active"));
+            button.classList.add("active");
+            selectedPair = button.dataset.pair;
+            loadData();
+          });
+        });
+
+        typeButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            typeButtons.forEach((btn) => btn.classList.remove("active"));
+            button.classList.add("active");
+            chartMode = button.dataset.type;
+            loadData();
+          });
+        });
+
+        await loadData();
+        setInterval(loadData, 60_000);
+      };
+
+      initChart().catch((error) => {
+        console.error("Chart initialization failed", error);
+        statusEl.textContent = "Unable to load chart";
+      });
+    </script>
   </body>
 </html>
