@@ -320,7 +320,7 @@ contract TradeFX is ERC20, ReentrancyGuard {
             barrier_increase_per_10_000_seconds
         );
 
-        return (PositionIDCounter, liquidation_barrier, insolvency_barrier, barrier_increase_per_10_000_seconds); // add these two
+        return (PositionIDCounter, liquidation_barrier, insolvency_barrier, barrier_increase_per_10_000_seconds);
     }
 
     function closePosition(uint256 position_id, uint256 FakeRate) public nonReentrant {
@@ -584,31 +584,6 @@ function getValueOfPool(uint256 FakeRate, address token) public view returns (ui
         // 4. Convert all to a single denomination (USDC) for the final value
         uint256 USDCValueOfPool = usdcOwned + engine.getRate(EURC, USDC, eurcOwned, FakeRate);
         uint256 EURCValueOfPool = eurcOwned + engine.getRate(USDC, EURC, usdcOwned, FakeRate);
-
-        if (token == USDC) {
-            return USDCValueOfPool;
-        } else {
-            return EURCValueOfPool;
-        }
-    }
-
-
-
-    function getValueOfPool_old(uint256 FakeRate, address token) public view returns (uint256) {
-        if (!TESTNET_MODE) {
-            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
-        }
-
-        uint256 totalUSDC = IUSDC.balanceOf(address(this));
-        uint256 USDCCurrentlyAsEURC = engine.getRate(EURC, USDC, EURCBorrowedFromUSDC, FakeRate);
-        uint256 USDCOwnedByPool = totalUSDC - USDCBorrowedFromEURC - USDCCollateral - USDCBorrowed + USDCCurrentlyAsEURC;
-
-        uint256 totalEURC = IEURC.balanceOf(address(this));
-        uint256 EURCCurrentlyAsUSDC = engine.getRate(USDC, EURC, USDCBorrowedFromEURC, FakeRate);
-        uint256 EURCOwnedByPool = totalEURC - EURCBorrowedFromUSDC - EURCCollateral - EURCBorrowed + EURCCurrentlyAsUSDC;
-
-        uint256 USDCValueOfPool = USDCOwnedByPool + engine.getRate(EURC, USDC, EURCOwnedByPool, FakeRate);
-        uint256 EURCValueOfPool = EURCOwnedByPool + engine.getRate(USDC, EURC, USDCOwnedByPool, FakeRate);
 
         if (token == USDC) {
             return USDCValueOfPool;
