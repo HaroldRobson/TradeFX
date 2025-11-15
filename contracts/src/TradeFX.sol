@@ -36,8 +36,9 @@ contract TradeFX is ERC20, ReentrancyGuard {
     uint256 public LendingRate; // bsps per 10,000 seconds.
     IERC20 IUSDC;
     IERC20 IEURC;
+    address public FXEngineAddress;
     FXEngine deployed_fx_engine; // used for TESTNET_MODE
-    IFXEngine engine;
+    IFXEngine public engine;// public if running on tests in a vm.fork(); private if deployed on testnet
 
     mapping(uint256 => Position) public IDToPosition;
     mapping(address => uint256[]) public UserPositions;
@@ -153,10 +154,12 @@ contract TradeFX is ERC20, ReentrancyGuard {
         TESTNET_MODE = _testnet_mode;
         IUSDC = IERC20(USDC);
         IEURC = IERC20(EURC);
+        FXEngineAddress = FXENGINE;
 
         if (TESTNET_MODE) {
             deployed_fx_engine = new FXEngine(address(this), USDC, EURC, msg.sender); 
             engine = IFXEngine(address(deployed_fx_engine));
+            FXEngineAddress = address(deployed_fx_engine);
         }
     }
 
@@ -300,6 +303,8 @@ contract TradeFX is ERC20, ReentrancyGuard {
 
         IDToPosition[PositionIDCounter] = pos;
         UserPositions[msg.sender].push(PositionIDCounter);
+
+        require(checkSolvency(PositionIDCounter, FakeRate) == Solvency.SOLVENT, "Position could be liquidated immediately");
         emit NewPosition(
             start_token,
             collateral,

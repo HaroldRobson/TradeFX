@@ -43,13 +43,13 @@ contract FXEngine { // this is our very simple mockup of the proposed Arc FXEngi
             return return_amount;
         }
 
-        if (tokenA == EURC) {
+        if (tokenA == USDC) {
             uint256 return_amount = amountA * 1e6 / FakeRate;
             IEURC.transfer(recipient, return_amount);
             return return_amount;
         }
 
-        return uint256(0);
+        revert("BAD TOKEN ADDRESSES SUPPLIED");
     }
 
     function getRate(address tokenA, address tokenB, uint256 amountA, uint256 FakeRate)
@@ -67,12 +67,12 @@ contract FXEngine { // this is our very simple mockup of the proposed Arc FXEngi
             return return_amount;
         }
 
-        if (tokenA == EURC) {
+        if (tokenA == USDC) {
             uint256 return_amount = amountA * 1e6 / FakeRate;
             return return_amount;
         }
 
-        return uint256(0);
+        revert("BAD TOKEN ADDRESSES SUPPLIED");
     }
 
     function withdraw(address token, uint256 amount, address recipient) external onlyTradeFXorOwner {

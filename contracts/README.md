@@ -1,4 +1,4 @@
-# TradeFX Contract - Complete Documentation 
+# TradeFX Contract - Complete Documentation
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -35,6 +35,250 @@ The contract includes a `TESTNET_MODE` boolean flag that determines how exchange
 - **TESTNET_MODE = false** (Production): Ignores any user-supplied `FakeRate` parameter and relies entirely on the FXEngine's real oracle data. The `FakeRate` parameter is set to 0 internally, making it impossible for users to manipulate rates.
 
 **Security Note:** In production deployments, `TESTNET_MODE` should ALWAYS be set to `false` to prevent rate manipulation. The `FakeRate` parameter exists solely for testing and demonstration purposes.
+
+---
+
+## TESTNET_MODE: The Mock FXEngine
+
+### Overview
+
+When `TESTNET_MODE = true`, TradeFX automatically deploys its own `FXEngine` contract during construction. This is a simplified mock oracle that enables testing on any network without requiring external oracle infrastructure.
+
+### How It Works
+
+**Deployment Process:**
+```solidity
+constructor(..., bool _testnet_mode) {
+    // ... initialization ...
+    
+    if (TESTNET_MODE) {
+        deployed_fx_engine = new FXEngine(address(this), USDC, EURC, msg.sender);
+        engine = IFXEngine(address(deployed_fx_engine));
+    } else {
+        engine = IFXEngine(FXENGINE); // Use provided oracle address
+    }
+}
+```
+
+**Key characteristics:**
+1. **Pre-funded**: The FXEngine must be pre-loaded with USDC and EURC tokens to facilitate swaps
+2. **User-controlled rates**: Users pass `FakeRate` parameter to simulate different exchange rates
+3. **Access-restricted**: Only TradeFX contract and deployer can interact with it
+4. **Testnet-only**: Should NEVER be used in production
+
+### FXEngine Contract Specification
+
+```solidity
+contract FXEngine {
+    address TRADEFX;  // Only TradeFX can swap
+    address OWNER;    // Owner can withdraw for redeployment
+    address USDC;
+    address EURC;
+    
+    // Main functions:
+    function swapExactTokensForTokens(
+        address tokenA,
+        address tokenB,
+        uint256 amountA,
+        address recipient,
+        uint256 FakeRate
+    ) external returns (uint256);
+    
+    function getRate(
+        address tokenA,
+        address tokenB,
+        uint256 amountA,
+        uint256 FakeRate
+    ) external view returns (uint256);
+    
+    function withdraw(
+        address token,
+        uint256 amount,
+        address recipient
+    ) external onlyTradeFXorOwner;
+}
+```
+
+### FakeRate Parameter
+
+**Definition:** `FakeRate` represents how many USDC you can buy with 1e6 EURC (1 EUR with 6 decimals).
+
+**Examples:**
+```javascript
+// EUR/USD = 1.10 (1 EUR = 1.10 USD)
+FakeRate = 1_100_000  // 1e6 EURC buys 1.1e6 USDC
+
+// EUR/USD = 1.05 (1 EUR = 1.05 USD)
+FakeRate = 1_050_000  // 1e6 EURC buys 1.05e6 USDC
+
+// EUR/USD = 0.95 (1 EUR = 0.95 USD)
+FakeRate = 950_000    // 1e6 EURC buys 0.95e6 USDC
+```
+
+**Validation:**
+```solidity
+require(FakeRate > 1e6, "You messed up the decimal point/trade direction");
+```
+
+This prevents rates below 1:1, which would indicate an error in rate specification.
+
+### Swap Logic
+
+**EURC → USDC:**
+```solidity
+if (tokenA == EURC) {
+    return_amount = FakeRate * amountA / 1e6;
+    // Example: 100 EURC at rate 1.10
+    // = 1_100_000 * 100e6 / 1e6
+    // = 110e6 USDC
+}
+```
+
+**USDC → EURC:**
+```solidity
+if (tokenA == USDC) {
+    return_amount = amountA * 1e6 / FakeRate;
+    // Example: 110 USDC at rate 1.10
+    // = 110e6 * 1e6 / 1_100_000
+    // = 100e6 EURC
+}
+```
+
+### Setting Up Testnet Deployment
+
+**Step 1: Deploy mock tokens**
+```javascript
+// Deploy USDC and EURC mock tokens (or use existing testnet tokens)
+const usdc = await MockUSDC.deploy();
+const eurc = await MockEURC.deploy();
+```
+
+**Step 2: Deploy TradeFX with TESTNET_MODE**
+```javascript
+const tradeFX = await TradeFX.deploy(
+    1000000e18,           // initialSupply: 1M LPT
+    usdc.address,         // USDC address
+    eurc.address,         // EURC address
+    ethers.constants.AddressZero, // FXENGINE (ignored in testnet mode)
+    100,                  // lending_rate: 1% per 10k seconds
+    500,                  // liquidation_buffer: 5%
+    300,                  // liquidator_fee: 3%
+    true                  // TESTNET_MODE = true
+);
+
+// TradeFX automatically deploys its own FXEngine
+const fxEngineAddress = await tradeFX.deployed_fx_engine();
+```
+
+**Step 3: Fund the FXEngine**
+```javascript
+// The FXEngine needs tokens to facilitate swaps
+await usdc.transfer(fxEngineAddress, 1000000e6);  // 1M USDC
+await eurc.transfer(fxEngineAddress, 1000000e6);  // 1M EURC
+```
+
+**Step 4: Use with FakeRate**
+```javascript
+// Open a position with a specific exchange rate
+await tradeFX.openPosition(
+    usdc.address,
+    1000e6,        // collateral
+    4000e6,        // borrow
+    eurc.address,
+    1100000        // FakeRate: 1 EUR = 1.10 USD
+);
+```
+
+### Access Control
+
+The FXEngine has restricted access:
+
+```solidity
+modifier onlyTradeFXorOwner() {
+    require(msg.sender == TRADEFX || msg.sender == OWNER);
+    _;
+}
+```
+
+**Why?**
+- Prevents random users from draining testnet funds
+- Only TradeFX can perform swaps
+- Only owner can withdraw (for redeployment if needed)
+
+### Withdrawal Function
+
+```solidity
+function withdraw(address token, uint256 amount, address recipient) 
+    external 
+    onlyTradeFXorOwner 
+{
+    // Allows owner to retrieve tokens for redeployment
+}
+```
+
+**Use case:** If you need to redeploy TradeFX, you can recover the tokens from the old FXEngine and fund the new one.
+
+### Limitations of Mock FXEngine
+
+**Not suitable for production because:**
+1. **User-controlled rates** - Anyone can specify arbitrary exchange rates
+2. **Pre-funded** - Requires manual token deposits, can run out
+3. **No oracle integration** - Doesn't reflect real market rates
+4. **Security** - Access control is basic, not battle-tested
+5. **No slippage simulation** - Always executes at exact rate
+
+**Testnet use only!** Always deploy with `TESTNET_MODE = false` and a real oracle in production.
+
+### Testing Different Scenarios
+
+**Simulate EUR strengthening:**
+```javascript
+// EUR/USD goes from 1.10 to 1.15
+await tradeFX.openPosition(..., 1150000);
+// Later close position to see profit
+```
+
+**Simulate EUR weakening:**
+```javascript
+// EUR/USD goes from 1.10 to 1.05
+await tradeFX.openPosition(..., 1050000);
+// Position may become liquidatable
+```
+
+**Simulate liquidation scenario:**
+```javascript
+// 1. Open position at 1.10
+const posId = await tradeFX.openPosition(..., 1100000);
+
+// 2. Wait for fees to accumulate
+await time.increase(20000);
+
+// 3. Check solvency at lower rate (1.08)
+const solvency = await tradeFX.checkSolvency(posId, 1080000);
+// Should return LIQUIDATABLE
+
+// 4. Liquidate
+await tradeFX.liquidate(posId, 1080000);
+```
+
+### Production Deployment Differences
+
+**Production (TESTNET_MODE = false):**
+```javascript
+const tradeFX = await TradeFX.deploy(
+    1000000e18,
+    usdc.address,
+    eurc.address,
+    realOracleAddress,  // ← Must provide real oracle
+    100,
+    500,
+    300,
+    false               // ← TESTNET_MODE = false
+);
+
+// All FakeRate parameters are ignored
+// Only real oracle data is used
+```
 
 ---
 
@@ -976,15 +1220,19 @@ constructor(
     uint256 initialSupply,      // Initial LPT minted to deployer
     address usdc,               // USDC token address
     address eurc,               // EURC token address
-    address FXENGINE,           // FXEngine oracle/swap contract
+    address FXENGINE,           // FXEngine oracle/swap contract (pass address(0) for TESTNET_MODE)
     uint256 _lending_rate,      // Bsps per 10,000 seconds
     uint256 _liquidation_buffer, // Bsps above borrowed (e.g., 500 = 5%)
     uint256 _liquidator_fee,    // Bsps of excess (e.g., 300 = 3%)
-    bool _testnet_mode          // true = allow FakeRate, false = use real oracle only
+    bool _testnet_mode          // true = deploy own FXEngine, false = use provided oracle
 )
 ```
 
-**CRITICAL:** For production deployments, `_testnet_mode` MUST be set to `false` to prevent users from manipulating exchange rates via the `FakeRate` parameter.
+**Deployment behavior:**
+- If `_testnet_mode = true`: TradeFX deploys its own FXEngine contract (ignores FXENGINE parameter)
+- If `_testnet_mode = false`: TradeFX uses the provided FXENGINE address
+
+**CRITICAL:** For production deployments, `_testnet_mode` MUST be set to `false` and a real oracle address must be provided.
 
 ### Key Formulas
 
@@ -1336,12 +1584,22 @@ Key to success:
 - ✅ Liquidity checks prevent "bank run" scenarios
 
 **Deployment Checklist:**
-- [ ] Set `TESTNET_MODE = false` for production
+
+**For Testnet:**
+- [ ] Set `TESTNET_MODE = true`
+- [ ] Pass `address(0)` for FXENGINE parameter
+- [ ] Fund the auto-deployed FXEngine with USDC and EURC
+- [ ] Test with various FakeRate values
+
+**For Production:**
+- [ ] Set `TESTNET_MODE = false`
+- [ ] Provide real, audited FXEngine oracle address
 - [ ] Verify FXEngine oracle is reliable and battle-tested
 - [ ] Set conservative LiquidationBuffer (5-10%)
 - [ ] Set attractive LiquidatorFee (3-5%)
 - [ ] Ensure initial LP liquidity is sufficient
 - [ ] Complete security audit before mainnet deployment
+- [ ] Never use address(0) for FXENGINE in production
 
 The contract is production-ready with the TESTNET_MODE protection in place, though additional safety features (slippage protection, minimum health checks) would further improve robustness.
 
