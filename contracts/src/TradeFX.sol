@@ -4,8 +4,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import {FXEngine} from "./FXEngine.sol";
 
-interface FXEngine {
+interface IFXEngine {
     function swapExactTokensForTokens(
         address tokenA,
         address tokenB,
@@ -17,10 +18,10 @@ interface FXEngine {
         external
         view
         returns (uint256);
-    function setRate(uint256 EURToDoll) external; // How many dollars can you buy with 1e6 euros?
 }
 
 contract TradeFX is ERC20, ReentrancyGuard {
+    bool public TESTNET_MODE; // used to allow FakeRate. More on this in the docs.
     uint256 public LiquidationBuffer; // How close you can get to insolvency before you're liquidated in bsps.
     uint256 public USDCBorrowed; // borrowed then converted to EURC for user's position
     uint256 public EURCBorrowed;
@@ -35,7 +36,8 @@ contract TradeFX is ERC20, ReentrancyGuard {
     uint256 public LendingRate; // bsps per 10,000 seconds.
     IERC20 IUSDC;
     IERC20 IEURC;
-    FXEngine engine;
+    FXEngine deployed_fx_engine; // used for TESTNET_MODE
+    IFXEngine engine;
 
     mapping(uint256 => Position) public IDToPosition;
     mapping(address => uint256[]) public UserPositions;
@@ -135,23 +137,30 @@ contract TradeFX is ERC20, ReentrancyGuard {
         uint256 initialSupply,
         address usdc,
         address eurc,
-        address FXENGINE,
+        address FXENGINE, // null for TESTNET_MODE - contract deploys its own FXEngine
         uint256 _lending_rate,
         uint256 _liquidation_buffer,
-        uint256 _liquidator_fee
+        uint256 _liquidator_fee,
+        bool _testnet_mode
     ) ERC20("TradeFX Liquidity Token", "TFXL") {
         _mint(msg.sender, initialSupply);
         USDC = usdc;
         EURC = eurc;
-        engine = FXEngine(FXENGINE);
+        engine = IFXEngine(FXENGINE);
         LendingRate = _lending_rate;
         LiquidationBuffer = _liquidation_buffer;
         LiquidatorFee = _liquidator_fee;
+        TESTNET_MODE = _testnet_mode;
         IUSDC = IERC20(USDC);
         IEURC = IERC20(EURC);
+
+        if (TESTNET_MODE) {
+            deployed_fx_engine = new FXEngine(address(this), USDC, EURC, msg.sender); 
+            engine = IFXEngine(address(deployed_fx_engine));
+        }
     }
 
-    function checkLiquidity(address token, uint256 amount) internal returns (bool) {
+    function checkLiquidity(address token, uint256 amount) internal view returns (bool) {
         if (token == USDC) {
             uint256 balance = IUSDC.balanceOf(address(this));
             uint256 available = balance - USDCCollateral - USDCBorrowedFromEURC;
@@ -167,6 +176,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function checkSolvency(uint256 position_id, uint256 FakeRate) public view returns (Solvency) {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 fees = calculateLendingFees(position_id);
         uint256 value = engine.getRate(
             IDToPosition[position_id].pos_token,
@@ -187,6 +200,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function calculateLiquidatorFee(uint256 position_id, uint256 FakeRate) public view returns (uint256) {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         if (checkSolvency(position_id, FakeRate) == Solvency.SOLVENT) {
             return 0;
         }
@@ -222,8 +239,14 @@ contract TradeFX is ERC20, ReentrancyGuard {
         nonReentrant
         returns (uint256, uint256, uint256, uint256)
     {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         require(checkLiquidity(start_token, borrow), "insufficient Liquidity");
         require(start_token != pos_token, "Cannot open position in same token");
+        require(start_token == USDC || start_token == EURC, "invalid token choice");
+        require(pos_token == USDC || pos_token == EURC, "invalid token choice");
         if (start_token == USDC) {
             IUSDC.transferFrom(msg.sender, address(this), collateral);
             IUSDC.approve(address(engine), collateral + borrow);
@@ -296,6 +319,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function closePosition(uint256 position_id, uint256 FakeRate) public nonReentrant {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         require(msg.sender == IDToPosition[position_id].user, "Not Your Position");
         if (checkSolvency(position_id, FakeRate) == Solvency.LIQUIDATABLE) {
             liquidate(position_id, FakeRate);
@@ -371,6 +398,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function liquidate(uint256 position_id, uint256 FakeRate) public nonReentrant {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         if (checkSolvency(position_id, FakeRate) == Solvency.INSOLVENT) {
             handleInsolvency(position_id, FakeRate);
             return;
@@ -424,7 +455,7 @@ contract TradeFX is ERC20, ReentrancyGuard {
         uint256 protocol_fee = calculateLendingFees(position_id);
         uint256 borrowed = IDToPosition[position_id].borrowed;
         require(
-            amount > liquidator_fee + protocol_fee + borrowed, "MAJOR ERROR: LIQUIDATABLE BUT UNABLE TO BE LIQUIDATED."
+            amount >= liquidator_fee + protocol_fee + borrowed, "MAJOR ERROR: LIQUIDATABLE BUT UNABLE TO BE LIQUIDATED."
         );
         uint256 return_amount = amount - protocol_fee - liquidator_fee - borrowed; // this may be negative if poorly initialised rates. be careful.
 
@@ -458,6 +489,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function handleInsolvency(uint256 position_id, uint256 FakeRate) internal {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         // theoretically should never come to this but just in case
         address user = IDToPosition[position_id].user;
 
@@ -524,6 +559,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     // remaining functions are for LPs
 
     function getValueOfPool(uint256 FakeRate, address token) public view returns (uint256) {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 totalUSDC = IUSDC.balanceOf(address(this));
         uint256 USDCCurrentlyAsEURC = engine.getRate(EURC, USDC, EURCBorrowedFromUSDC, FakeRate);
         uint256 USDCOwnedByPool = totalUSDC - USDCBorrowedFromEURC - USDCCollateral + USDCCurrentlyAsEURC;
@@ -543,6 +582,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function getUSDCPricePerLPT(uint256 FakeRate) public view returns (uint256) {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 USDCValueOfPool = getValueOfPool(FakeRate, USDC);
         uint256 supply = totalSupply();
         uint256 price_per_lpt = USDCValueOfPool / supply;
@@ -550,6 +593,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function getEURCPricePerLPT(uint256 FakeRate) public view returns (uint256) {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 EURCValueOfPool = getValueOfPool(FakeRate, EURC);
         uint256 supply = totalSupply();
         uint256 price_per_lpt = EURCValueOfPool / supply;
@@ -557,6 +604,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function getUSDCPrice(uint256 amount, uint256 FakeRate) public view returns (uint256) {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 supply = totalSupply();
         uint256 USDCValueOfPool = getValueOfPool(FakeRate, USDC);
         uint256 price = (USDCValueOfPool * amount) / supply; // crucially division performed last for better decimal accuracy
@@ -564,6 +615,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function getEURCPrice(uint256 amount, uint256 FakeRate) public view returns (uint256) {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 supply = totalSupply();
         uint256 EURCValueOfPool = getValueOfPool(FakeRate, EURC);
         uint256 price = (EURCValueOfPool * amount) / supply; // crucially division performed last for better decimal accuracy
@@ -571,6 +626,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function buyLPTWithUSDC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 price = getUSDCPrice(amount, FakeRate);
         IUSDC.transferFrom(msg.sender, address(this), price);
         _mint(recipient, amount);
@@ -581,6 +640,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function buyLPTWithEURC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 price = getEURCPrice(amount, FakeRate);
         IEURC.transferFrom(msg.sender, address(this), price);
         _mint(recipient, amount);
@@ -591,6 +654,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function sellLPTForUSDC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 price = getUSDCPrice(amount, FakeRate);
         uint256 availableUSDC = IUSDC.balanceOf(address(this)) - USDCBorrowedFromEURC - USDCCollateral;
         require(availableUSDC >= price, "Run on the bank situation");
@@ -603,6 +670,10 @@ contract TradeFX is ERC20, ReentrancyGuard {
     }
 
     function sellLPTForEURC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
+        if (!TESTNET_MODE) {
+            FakeRate = 0; // FakeRate is obviously only used for demo since FXEngine does not exist on Arc. 
+        }
+
         uint256 price = getEURCPrice(amount, FakeRate);
         uint256 availableEURC = IEURC.balanceOf(address(this)) - EURCBorrowedFromUSDC - EURCCollateral;
         require(availableEURC >= price, "Run on the bank situation");

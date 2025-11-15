@@ -26,6 +26,16 @@ TradeFX is a leveraged FX trading protocol enabling synthetic exposure to EUR/US
 
 Traders can gain leveraged FX exposure **without counterparty matching** or order books, using a simple deposit-borrow-swap mechanism backed by a shared liquidity pool.
 
+### TESTNET_MODE and FakeRate
+
+The contract includes a `TESTNET_MODE` boolean flag that determines how exchange rates are obtained:
+
+- **TESTNET_MODE = true**: Uses the `FakeRate` parameter passed by users for testing/demonstration purposes. This allows the contract to be tested on networks where the real FXEngine oracle doesn't exist (e.g., on testnet chains).
+
+- **TESTNET_MODE = false** (Production): Ignores any user-supplied `FakeRate` parameter and relies entirely on the FXEngine's real oracle data. The `FakeRate` parameter is set to 0 internally, making it impossible for users to manipulate rates.
+
+**Security Note:** In production deployments, `TESTNET_MODE` should ALWAYS be set to `false` to prevent rate manipulation. The `FakeRate` parameter exists solely for testing and demonstration purposes.
+
 ---
 
 ## Core Mechanics
@@ -95,15 +105,19 @@ start_token: USDC      // What you're depositing
 collateral: 1000e6     // 1,000 USDC
 borrow: 4000e6         // 4,000 USDC borrowed
 pos_token: EURC        // What you want exposure to
-FakeRate: 1100000      // Exchange rate (for testing)
+FakeRate: 1100000      // Exchange rate (only used if TESTNET_MODE = true)
+
+// Note: In production (TESTNET_MODE = false), FakeRate is ignored and 
+// the real oracle rate from FXEngine is used instead
 
 // Execution flow:
-1. Check pool has 4,000 USDC available
-2. Transfer 1,000 USDC from user to contract
-3. Approve FXEngine to spend 5,000 USDC
-4. Swap 1,000 USDC → ~900 EURC (converted_collateral)
-5. Swap 4,000 USDC → ~3,600 EURC (converted_borrowed)
-6. Total position: 4,500 EURC
+1. Validate tokens (must be USDC or EURC, and different from each other)
+2. Check pool has 4,000 USDC available
+3. Transfer 1,000 USDC from user to contract
+4. Approve FXEngine to spend 5,000 USDC
+5. Swap 1,000 USDC → ~900 EURC (converted_collateral)
+6. Swap 4,000 USDC → ~3,600 EURC (converted_borrowed)
+7. Total position: 4,500 EURC
 
 // State updates:
 USDCBorrowed += 4,000
@@ -741,6 +755,31 @@ IUSDC.approve(address(engine), amount);
 
 Approvals are fresh for each operation, minimizing approval-related attack surface.
 
+### 6. TESTNET_MODE Protection
+
+Production deployments use `TESTNET_MODE = false` to prevent rate manipulation:
+
+```solidity
+if (!TESTNET_MODE) {
+    FakeRate = 0; // Force use of real oracle
+}
+```
+
+This ensures users cannot manipulate exchange rates through the `FakeRate` parameter. All rate queries go through the FXEngine oracle with the real market rate.
+
+### 7. Token Validation
+
+```solidity
+require(start_token != pos_token, "Cannot open position in same token");
+require(start_token == USDC || start_token == EURC, "invalid token choice");
+require(pos_token == USDC || pos_token == EURC, "invalid token choice");
+```
+
+Prevents:
+- Opening positions in the same token (USDC → USDC)
+- Using unauthorized tokens
+- Invalid token combinations
+
 ---
 
 ## Known Limitations
@@ -786,21 +825,15 @@ All swaps execute at whatever rate the FXEngine returns with no minimum output c
 - Add minReturn parameters to functions
 - Use price impact checks
 
-### 3. FakeRate is User-Controlled
+### 3. ~~FakeRate is User-Controlled~~ (FIXED)
 
-**Issue:** LP functions accept `FakeRate` from users, which determines pool valuation.
+**Resolution:** The contract now includes a `TESTNET_MODE` flag that addresses this issue:
 
-**Potential exploit:**
-```
-1. Manipulate FakeRate to make pool appear undervalued
-2. Buy LPT at discount
-3. Sell at real rate
-```
+- **Production mode** (`TESTNET_MODE = false`): All user-supplied `FakeRate` values are ignored and set to 0 internally. The contract uses only the FXEngine's real oracle data, preventing manipulation.
 
-**Mitigation:**
-- Use trusted oracle instead of user input
-- FakeRate should only be for testing
-- Production should use FXEngine's real rate
+- **Testnet mode** (`TESTNET_MODE = true`): Allows `FakeRate` parameter for testing on networks where the real FXEngine oracle doesn't exist.
+
+**Deployment guideline:** Always deploy with `TESTNET_MODE = false` in production to ensure security.
 
 ### 4. No Parameter Updates
 
@@ -819,19 +852,17 @@ Critical parameters are immutable:
 - Implement governance
 - Start with conservative parameters
 
-### 5. No Same-Token Check
+### 5. ~~No Same-Token Check~~ (FIXED)
 
-Users can call:
-```solidity
-openPosition(USDC, 1000, 4000, USDC, FakeRate)
-```
+**Resolution:** The contract now includes validation in `openPosition`:
 
-This swaps USDC → USDC, which doesn't make sense.
-
-**Mitigation:**
 ```solidity
 require(start_token != pos_token, "Cannot open position in same token");
+require(start_token == USDC || start_token == EURC, "invalid token choice");
+require(pos_token == USDC || pos_token == EURC, "invalid token choice");
 ```
+
+This prevents users from opening positions where start_token equals pos_token, and ensures only USDC and EURC are accepted.
 
 ### 6. FXEngine Dependency
 
@@ -948,9 +979,12 @@ constructor(
     address FXENGINE,           // FXEngine oracle/swap contract
     uint256 _lending_rate,      // Bsps per 10,000 seconds
     uint256 _liquidation_buffer, // Bsps above borrowed (e.g., 500 = 5%)
-    uint256 _liquidator_fee     // Bsps of excess (e.g., 300 = 3%)
+    uint256 _liquidator_fee,    // Bsps of excess (e.g., 300 = 3%)
+    bool _testnet_mode          // true = allow FakeRate, false = use real oracle only
 )
 ```
+
+**CRITICAL:** For production deployments, `_testnet_mode` MUST be set to `false` to prevent users from manipulating exchange rates via the `FakeRate` parameter.
 
 ### Key Formulas
 
@@ -1003,12 +1037,14 @@ const tradeFX = "0x...";
 // User has 1,000 USDC, wants 5x leverage long EUR
 await usdcContract.approve(tradeFX, 1000e6);
 
+// Note: If TESTNET_MODE = false (production), the FakeRate parameter
+// is ignored and the real oracle rate is used instead
 const tx = await tradeFXContract.openPosition(
     usdc,           // start_token
     1000e6,         // collateral: 1,000 USDC
     4000e6,         // borrow: 4,000 USDC (4x on top of collateral)
     eurc,           // pos_token: want EURC exposure
-    1100000         // FakeRate (1.10 EUR/USD)
+    1100000         // FakeRate (only used if TESTNET_MODE = true)
 );
 
 // Returns: (positionId, liquidationBarrier, insolvencyBarrier, barrierIncrease)
@@ -1216,12 +1252,12 @@ await tradeFXContract.sellLPTForUSDC(amount, myAddress, currentRate);
    }
    ```
 
-2. **Prevent same-token positions**
+2. ~~**Prevent same-token positions**~~ ✓ FIXED
    ```solidity
    require(start_token != pos_token, "Must trade different tokens");
    ```
 
-3. **Add minimum health check**
+3. **Add minimum health check after opening**
    ```solidity
    require(checkSolvency(id, FakeRate) == SOLVENT, "Opens liquidatable");
    ```
@@ -1293,7 +1329,21 @@ Key to success:
 3. Reliable oracle (FXEngine)
 4. Sufficient LP liquidity
 
-The contract is production-ready with minor fixes, though additional safety features (slippage protection, parameter governance) would improve robustness.
+**Recent Improvements:**
+- ✅ Token validation prevents same-token positions
+- ✅ TESTNET_MODE protection against rate manipulation
+- ✅ Reentrancy guards on all state-changing functions
+- ✅ Liquidity checks prevent "bank run" scenarios
+
+**Deployment Checklist:**
+- [ ] Set `TESTNET_MODE = false` for production
+- [ ] Verify FXEngine oracle is reliable and battle-tested
+- [ ] Set conservative LiquidationBuffer (5-10%)
+- [ ] Set attractive LiquidatorFee (3-5%)
+- [ ] Ensure initial LP liquidity is sufficient
+- [ ] Complete security audit before mainnet deployment
+
+The contract is production-ready with the TESTNET_MODE protection in place, though additional safety features (slippage protection, minimum health checks) would further improve robustness.
 
 ---
 
@@ -1321,7 +1371,10 @@ A: Theoretically unlimited, but practically limited by:
 A: Yes, the contract tracks an array of position IDs per user via `UserPositions[user]`.
 
 **Q: What's FakeRate for?**
-A: Testing and demonstration. Production should use FXEngine's actual oracle rate, not user-supplied values.
+A: `FakeRate` is a testing parameter that allows the contract to function on testnets where the real FXEngine oracle doesn't exist. When `TESTNET_MODE = true`, the contract accepts user-supplied exchange rates. When `TESTNET_MODE = false` (production), all `FakeRate` values are ignored and the real oracle is used exclusively. This prevents rate manipulation attacks in production while enabling testing on any network.
+
+**Q: Should I deploy with TESTNET_MODE = true or false?**
+A: **ALWAYS use `false` for production deployments.** Only use `true` for testing on networks where you don't have a real oracle. Using `true` in production would allow users to manipulate exchange rates and exploit the protocol.
 
 **Q: How often should I check my position?**
 A: Depends on leverage and volatility. With 10x leverage, a 5% adverse move liquidates you. Check at least daily for high leverage, weekly for low leverage.
