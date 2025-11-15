@@ -38,12 +38,14 @@ contract FXEngine { // this is our very simple mockup of the proposed Arc FXEngi
         require(tokenB == USDC || tokenB == EURC, "invalid token choice");
 
         if (tokenA == EURC) {
+            IEURC.transferFrom(msg.sender, address(this), amountA);
             uint256 return_amount = FakeRate * amountA / 1e6;
             IUSDC.transfer(recipient, return_amount);
             return return_amount;
         }
 
         if (tokenA == USDC) {
+            IUSDC.transferFrom(msg.sender, address(this), amountA);
             uint256 return_amount = amountA * 1e6 / FakeRate;
             IEURC.transfer(recipient, return_amount);
             return return_amount;
