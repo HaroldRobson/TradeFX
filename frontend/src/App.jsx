@@ -7,6 +7,7 @@ import TradingInterface from "./components/TradingInterface";
 import WalletAuth from "./components/WalletAuth";
 import CircleWalletAuth from "./components/CircleWalletAuth";
 import EurcUsdcTicker from "./components/EurcUsdcTicker";
+import BridgeInterface from "./components/BridgeInterface";
 
 function App() {
   const [activeTab, setActiveTab] = useState("trade");
@@ -180,6 +181,12 @@ function App() {
           Wallet
         </button>
         <button
+          className={activeTab === "bridge" ? "active" : ""}
+          onClick={() => setActiveTab("bridge")}
+        >
+          Bridge to Arc
+        </button>
+        <button
           className={activeTab === "onramp" ? "active" : ""}
           onClick={() => setActiveTab("onramp")}
         >
@@ -194,6 +201,7 @@ function App() {
           </div>
         )}
         {activeTab === "wallet" && <WalletAuth />}
+        {activeTab === "bridge" && <BridgeInterface />}
         {activeTab === "onramp" && <OnrampPayment />}
       </main>
     </div>

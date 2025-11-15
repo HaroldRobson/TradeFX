@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@circle-fin/adapter-viem-v2": "^1.1.0",
+    "@circle-fin/bridge-kit": "^1.1.1",
+    "@circle-fin/provider-cctp-v2": "^1.0.3",
     "@circle-fin/w3s-pw-web-sdk": "^1.1.11",
     "@thirdweb-dev/react": "^4.9.4",
     "@thirdweb-dev/sdk": "^4.0.99",
@@ -22,7 +25,8 @@
     "react-dom": "^19.2.0",
     "stream-browserify": "^3.0.0",
     "thirdweb": "^5.112.1",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "viem": "^2.39.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

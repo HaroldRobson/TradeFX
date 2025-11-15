@@ -17,7 +17,12 @@ export default defineConfig({
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['buffer', 'util', 'process'],
+    include: [
+      'buffer', 
+      'util', 
+      'process',
+      '@circle-fin/w3s-pw-web-sdk'
+    ],
     esbuildOptions: {
       define: {
         global: 'globalThis',

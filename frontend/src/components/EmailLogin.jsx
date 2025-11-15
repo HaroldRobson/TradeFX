@@ -1,5 +1,6 @@
+//import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
 import { useEffect, useRef, useState } from "react";
-// Circle SDK will be imported dynamically to avoid browser compatibility issues
+
 
 const EmailLogin = ({ onSuccess }) => {
   const [email, setEmail] = useState("");
@@ -12,6 +13,99 @@ const EmailLogin = ({ onSuccess }) => {
   // SDK will be initialized lazily when user submits email form
   // This prevents SDK loading errors from breaking the app on initial load
 
+  // Get Circle API key from environment
+  const getApiKey = () => {
+    const apiKey = import.meta.env.VITE_CIRCLE_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "Circle API key not configured. Please set VITE_CIRCLE_API_KEY environment variable."
+      );
+    }
+    return apiKey;
+  };
+
+  // Get app ID from Circle API using API key
+  const getAppId = async () => {
+    const apiKey = getApiKey();
+    try {
+      const response = await fetch("https://api.circle.com/v1/w3s/config/entity", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to get app ID: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.appId;
+    } catch (err) {
+      console.error("Error fetching app ID:", err);
+      throw new Error(`Failed to get app ID: ${err.message}`);
+    }
+  };
+
+  // Create user using Circle API
+  const createUser = async (userId) => {
+    const apiKey = getApiKey();
+    try {
+      const response = await fetch("https://api.circle.com/v1/w3s/users", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        // User might already exist, which is okay
+        if (response.status !== 409) {
+          throw new Error(errorData.message || `Failed to create user: ${response.status}`);
+        }
+      }
+
+      return await response.json();
+    } catch (err) {
+      console.error("Error creating user:", err);
+      throw err;
+    }
+  };
+
+  // Create session using Circle API
+  const createSession = async (userId) => {
+    const apiKey = getApiKey();
+    try {
+      const response = await fetch("https://api.circle.com/v1/w3s/user/sessions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create session: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        userToken: data.data?.userToken,
+        encryptionKey: data.data?.encryptionKey,
+      };
+    } catch (err) {
+      console.error("Error creating session:", err);
+      throw err;
+    }
+  };
+
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -20,20 +114,24 @@ const EmailLogin = ({ onSuccess }) => {
     try {
       // Initialize SDK if not already initialized
       if (!sdkRef.current) {
-        const appId = import.meta.env.VITE_CIRCLE_APP_ID || "";
-        const userToken = import.meta.env.VITE_CIRCLE_USER_TOKEN || "";
-        const encryptionKey = import.meta.env.VITE_CIRCLE_ENCRYPTION_KEY || "";
-
-        if (!appId || !userToken || !encryptionKey) {
-          setError(
-            "Circle SDK not configured. Please set up VITE_CIRCLE_APP_ID, VITE_CIRCLE_USER_TOKEN, and VITE_CIRCLE_ENCRYPTION_KEY environment variables."
-          );
-          setLoading(false);
-          return;
-        }
-
         try {
-          const { W3SSdk } = await import("@circle-fin/w3s-pw-web-sdk");
+          // Get app ID, user token, and encryption key using API key
+          const appId = await getAppId();
+          if (!appId) {
+            throw new Error("Failed to get app ID from Circle API.");
+          }
+
+          // Create user and session
+          const userId = `user-${email}-${Date.now()}`;
+          await createUser(userId);
+          const { userToken, encryptionKey } = await createSession(userId);
+
+          if (!userToken || !encryptionKey) {
+            throw new Error("Failed to create session. Missing userToken or encryptionKey.");
+          }
+
+          try {
+            const { W3SSdk } = await import("@circle-fin/w3s-pw-web-sdk");
           sdkRef.current = new W3SSdk({
             configs: {
               appSettings: { appId },
@@ -57,11 +155,17 @@ const EmailLogin = ({ onSuccess }) => {
               }
             },
           });
-          sdkRef.current.setAppSettings({ appId });
-          sdkRef.current.setAuthentication({ userToken, encryptionKey });
-        } catch (sdkError) {
-          console.error("Failed to load Circle SDK:", sdkError);
-          setError("Failed to initialize login system. Please try again later.");
+            sdkRef.current.setAppSettings({ appId });
+            sdkRef.current.setAuthentication({ userToken, encryptionKey });
+          } catch (sdkError) {
+            console.error("Failed to load Circle SDK:", sdkError);
+            setError(sdkError.message || "Failed to initialize login system. Please try again later.");
+            setLoading(false);
+            return;
+          }
+        } catch (initError) {
+          console.error("Failed to initialize Circle credentials:", initError);
+          setError(initError.message || "Failed to initialize login system. Please try again later.");
           setLoading(false);
           return;
         }

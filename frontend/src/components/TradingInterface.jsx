@@ -3,9 +3,16 @@ import { useState } from "react";
 function TradingInterface() {
   const [amount, setAmount] = useState("");
   const [leverage, setLeverage] = useState(1);
+  const [collateral, setCollateral] = useState(0);
+  const [borrowed, setBorrowed] = useState(0);
 
+  const calculateCollateralAndBorrowed = () => {
+    setCollateral(Number(amount) * (10**6));
+    setBorrowed(Number(amount) * (10**6) * leverage);
+  };
   const handleTrade = (direction) => {
-    console.log(`${direction} trade:`, { amount, leverage });
+    calculateCollateralAndBorrowed();
+    console.log(`${direction} trade:`, { amount, leverage, collateral, borrowed });
   };
 
   return (
@@ -13,7 +20,7 @@ function TradingInterface() {
       <h2>Trade</h2>
       <div className="trading-form">
         <div className="form-group">
-          <label>Amount (USDC)</label>
+          <label>Amount (USD)</label>
           <input
             type="number"
             value={amount}
@@ -22,7 +29,7 @@ function TradingInterface() {
           />
         </div>
         <div className="form-group">
-          <label>Leverage: {leverage}x</label>
+          <label>Leverage: {leverage}</label>
           <input
             type="range"
             min="1"

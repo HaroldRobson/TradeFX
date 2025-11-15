@@ -4,10 +4,136 @@ import { useRef, useState } from "react";
 const CircleWalletAuth = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const [authMethod, setAuthMethod] = useState(null); // 'email', 'google', 'apple', 'pin'
   const sdkRef = useRef(null);
 
-  // Initialize Circle SDK with credentials from backend
+  // Get Circle API key from environment
+  const getApiKey = () => {
+    const apiKey = import.meta.env.VITE_CIRCLE_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "Circle API key not configured. Please set VITE_CIRCLE_API_KEY environment variable."
+      );
+    }
+    return apiKey;
+  };
+
+  // Get app ID from Circle API using API key
+  const getAppId = async () => {
+    const apiKey = getApiKey();
+    try {
+      const response = await fetch("https://api.circle.com/v1/w3s/config/entity", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to get app ID: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.appId;
+    } catch (err) {
+      console.error("Error fetching app ID:", err);
+      throw new Error(`Failed to get app ID: ${err.message}`);
+    }
+  };
+
+  // Create user using Circle API
+  const createUser = async (userId) => {
+    const apiKey = getApiKey();
+    try {
+      const response = await fetch("https://api.circle.com/v1/w3s/users", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        // User might already exist, which is okay
+        if (response.status !== 409) {
+          throw new Error(errorData.message || `Failed to create user: ${response.status}`);
+        }
+      }
+
+      return await response.json();
+    } catch (err) {
+      console.error("Error creating user:", err);
+      throw err;
+    }
+  };
+
+  // Create session using Circle API
+  const createSession = async (userId) => {
+    const apiKey = getApiKey();
+    try {
+      const response = await fetch("https://api.circle.com/v1/w3s/user/sessions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create session: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        userToken: data.data?.userToken,
+        encryptionKey: data.data?.encryptionKey,
+      };
+    } catch (err) {
+      console.error("Error creating session:", err);
+      throw err;
+    }
+  };
+
+  // Initialize user account and create wallet using Circle API
+  const initializeUser = async (userToken, blockchains = ["ETH"]) => {
+    const apiKey = getApiKey();
+    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    
+    try {
+      const response = await fetch("https://api.circle.com/v1/w3s/user/initialize", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "X-User-Token": userToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idempotencyKey,
+          blockchains,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to initialize user: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data?.challengeId;
+    } catch (err) {
+      console.error("Error initializing user:", err);
+      throw err;
+    }
+  };
+
+  // Initialize Circle SDK with credentials
   const initializeSDK = async (appId, userToken, encryptionKey) => {
     if (sdkRef.current) {
       // Update authentication if SDK already exists
@@ -112,33 +238,17 @@ const CircleWalletAuth = ({ onSuccess }) => {
   // Handle wallet creation flow
   const handleWalletCreation = async (userToken, encryptionKey) => {
     try {
-      // Get wallet creation challenge from backend
-      const response = await fetch("/api/circle/create-wallet", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userToken,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.challengeId) {
-          await executeChallenge(data.challengeId, userToken, encryptionKey);
-        } else {
-          setError("Failed to get wallet creation challenge.");
-          setLoading(false);
-        }
+      // Create wallet using Circle API
+      const challengeId = await initializeUser(userToken);
+      if (challengeId) {
+        await executeChallenge(challengeId, userToken, encryptionKey);
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || "Failed to create wallet. Please try again.");
+        setError("Failed to get wallet creation challenge.");
         setLoading(false);
       }
     } catch (err) {
       console.error("Wallet creation error:", err);
-      setError("An error occurred during wallet creation.");
+      setError(err.message || "An error occurred during wallet creation.");
       setLoading(false);
     }
   };
@@ -147,66 +257,44 @@ const CircleWalletAuth = ({ onSuccess }) => {
   const handleWalletInit = async (method = "pin") => {
     setAuthMethod(method);
     setError("");
+    setStatus("");
     setLoading(true);
 
     try {
-      // Step 1: Backend creates user, session, and initializes wallet
-      // This endpoint should:
-      // 1. Create a user (if needed)
-      // 2. Create a session token (returns userToken, encryptionKey)
-      // 3. Initialize user account and create wallet (returns appId, challengeId)
-      let response;
-      try {
-        response = await fetch("/api/circle/initialize-wallet", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            method, // 'pin', 'email', etc.
-          }),
-        });
-      } catch (fetchError) {
-        throw new Error(
-          "Unable to connect to backend server. Please ensure your backend API is running and implements the /api/circle/initialize-wallet endpoint."
-        );
+      // Step 1: Get app ID from Circle API
+      setStatus("Getting app configuration...");
+      const appId = await getAppId();
+      if (!appId) {
+        throw new Error("Failed to get app ID from Circle API.");
       }
 
-      if (response.status === 404) {
-        throw new Error(
-          "Backend API endpoint not found. Please implement the /api/circle/initialize-wallet endpoint on your backend server. See the README for implementation details."
-        );
+      // Step 2: Create or get user
+      setStatus("Creating user...");
+      const userId = `user-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      await createUser(userId);
+
+      // Step 3: Create session to get userToken and encryptionKey
+      setStatus("Creating session...");
+      const { userToken, encryptionKey } = await createSession(userId);
+      if (!userToken || !encryptionKey) {
+        throw new Error("Failed to create session. Missing userToken or encryptionKey.");
       }
 
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: `Server error: ${response.status} ${response.statusText}` };
-        }
-        throw new Error(errorData.message || "Failed to initialize wallet");
+      // Step 4: Initialize SDK with credentials
+      setStatus("Initializing SDK...");
+      await initializeSDK(appId, userToken, encryptionKey);
+
+      // Step 5: Initialize user account and create wallet
+      setStatus("Creating wallet...");
+      const challengeId = await initializeUser(userToken);
+
+      // Step 6: Execute challenge (PIN setup, wallet creation, etc.)
+      if (challengeId) {
+        setStatus("Completing wallet setup...");
+        await executeChallenge(challengeId, userToken, encryptionKey);
+      } else {
+        throw new Error("Failed to get challenge ID for wallet creation.");
       }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        throw new Error("Invalid response from server. Expected JSON but received something else.");
-      }
-
-      // Validate required fields
-      if (!data.appId || !data.userToken || !data.encryptionKey || !data.challengeId) {
-        throw new Error(
-          "Invalid response from server. Missing required fields (appId, userToken, encryptionKey, or challengeId)."
-        );
-      }
-
-      // Step 2: Initialize SDK with credentials
-      await initializeSDK(data.appId, data.userToken, data.encryptionKey);
-
-      // Step 3: Execute challenge (PIN setup, wallet creation, etc.)
-      await executeChallenge(data.challengeId, data.userToken, data.encryptionKey);
     } catch (err) {
       console.error("Wallet initialization error:", err);
       setError(err.message || "Failed to initialize wallet. Please try again.");
@@ -228,72 +316,20 @@ const CircleWalletAuth = ({ onSuccess }) => {
   const handleSocialLogin = async (provider) => {
     setAuthMethod(provider);
     setError("");
+    setStatus("");
     setLoading(true);
 
     try {
       // For social login, we need to:
-      // 1. Get appId from backend
+      // 1. Get appId from Circle API
       // 2. Initialize SDK with appId (without userToken/encryptionKey yet)
       // 3. Perform social login (which will return userToken/encryptionKey)
       // 4. Then initialize wallet
 
-      let response;
-      try {
-        response = await fetch("/api/circle/get-app-id", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-      } catch (fetchError) {
-        throw new Error(
-          "Unable to connect to backend server. Please ensure your backend API is running and implements the /api/circle/get-app-id endpoint."
-        );
-      }
-
-      // Check if response is 404
-      if (response.status === 404) {
-        throw new Error(
-          "Backend API endpoint not found. Please implement the /api/circle/get-app-id endpoint on your backend server. See the README for implementation details."
-        );
-      }
-
-      // Check content type before parsing
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        // Try to get text to see what we actually received
-        const text = await response.text();
-        throw new Error(
-          `Invalid response from server. Expected JSON but received ${contentType || "unknown content type"}. ` +
-          `The endpoint /api/circle/get-app-id may not be implemented. ` +
-          `Response preview: ${text.substring(0, 100)}...`
-        );
-      }
-
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: `Server error: ${response.status} ${response.statusText}` };
-        }
-        throw new Error(errorData.message || "Failed to get App ID");
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        throw new Error(
-          "Failed to parse JSON response from server. The /api/circle/get-app-id endpoint may not be returning valid JSON. " +
-          "Please check your backend implementation."
-        );
-      }
-
-      const { appId } = data;
-
+      setStatus("Getting app configuration...");
+      const appId = await getAppId();
       if (!appId) {
-        throw new Error("App ID not found in server response. The endpoint should return: { appId: 'your-app-id' }");
+        throw new Error("Failed to get app ID from Circle API.");
       }
 
       // Initialize SDK with just appId for social login
@@ -378,27 +414,6 @@ const CircleWalletAuth = ({ onSuccess }) => {
         border: "1px solid #e9ecef",
       }}
     >
-      <h3
-        style={{
-          marginBottom: "1rem",
-          color: "#1a1a1a",
-          fontSize: "1.25rem",
-          fontWeight: "600",
-        }}
-      >
-        Create Circle Wallet
-      </h3>
-      <p
-        style={{
-          marginBottom: "1.5rem",
-          color: "#666",
-          fontSize: "0.875rem",
-        }}
-      >
-        Create a user-controlled wallet with Circle. Choose your preferred
-        authentication method:
-      </p>
-
       {error && (
         <div
           style={{
@@ -520,35 +535,13 @@ const CircleWalletAuth = ({ onSuccess }) => {
             fontSize: "0.875rem",
           }}
         >
-          {authMethod === "email" && "Initializing email authentication..."}
-          {authMethod === "google" && "Redirecting to Google..."}
-          {authMethod === "apple" && "Redirecting to Apple..."}
-          {authMethod === "pin" && "Setting up PIN authentication..."}
-          {!authMethod && "Loading..."}
+          {status || (authMethod === "email" && "Initializing email authentication...")}
+          {!status && authMethod === "google" && "Redirecting to Google..."}
+          {!status && authMethod === "apple" && "Redirecting to Apple..."}
+          {!status && authMethod === "pin" && "Setting up PIN authentication..."}
+          {!status && !authMethod && "Loading..."}
         </div>
       )}
-
-      <div
-        style={{
-          marginTop: "1rem",
-          padding: "0.75rem",
-          backgroundColor: "#fff3cd",
-          borderRadius: "8px",
-          fontSize: "0.75rem",
-          color: "#856404",
-          border: "1px solid #ffc107",
-        }}
-      >
-        <strong>⚠️ Backend Required:</strong> This feature requires backend API endpoints that use your Circle API key.
-        <br />
-        <strong>Required endpoints:</strong>
-        <ul style={{ margin: "0.5rem 0 0 1.25rem", padding: 0 }}>
-          <li><code>GET /api/circle/get-app-id</code></li>
-          <li><code>POST /api/circle/initialize-wallet</code></li>
-          <li><code>POST /api/circle/create-wallet</code></li>
-        </ul>
-        See the README for implementation details.
-      </div>
     </div>
   );
 };
