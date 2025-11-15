@@ -21,7 +21,7 @@ interface FXEngine {
 }
 
 contract TradeFX is ERC20, ReentrancyGuard {
-    uint256 public LiquidationBuffer; // How close you can get to insolvency before you're liquidated in bsps. MUST be > than LiquidatorFee
+    uint256 public LiquidationBuffer; // How close you can get to insolvency before you're liquidated in bsps.
     uint256 public USDCBorrowed; // borrowed then converted to EURC for user's position
     uint256 public EURCBorrowed;
     uint256 public USDCBorrowedFromEURC; // borrowed funds after conversion
@@ -137,14 +137,16 @@ contract TradeFX is ERC20, ReentrancyGuard {
         address eurc,
         address FXENGINE,
         uint256 _lending_rate,
-        uint256 _liquidation_buffer
+        uint256 _liquidation_buffer,
+        uint256 _liquidator_fee
     ) ERC20("TradeFX Liquidity Token", "TFXL") {
-        _mint(address(this), initialSupply);
+        _mint(msg.sender, initialSupply);
         USDC = usdc;
         EURC = eurc;
         engine = FXEngine(FXENGINE);
         LendingRate = _lending_rate;
         LiquidationBuffer = _liquidation_buffer;
+        LiquidatorFee = _liquidator_fee;
         IUSDC = IERC20(USDC);
         IEURC = IERC20(EURC);
     }
@@ -153,12 +155,12 @@ contract TradeFX is ERC20, ReentrancyGuard {
         if (token == USDC) {
             uint256 balance = IUSDC.balanceOf(address(this));
             uint256 available = balance - USDCCollateral - USDCBorrowedFromEURC;
-            return available > amount;
+            return available >= amount;
         }
         if (token == EURC) {
             uint256 balance = IEURC.balanceOf(address(this));
             uint256 available = balance - EURCCollateral - EURCBorrowedFromUSDC;
-            return available > amount;
+            return available >= amount;
         }
 
         return false;
@@ -217,9 +219,11 @@ contract TradeFX is ERC20, ReentrancyGuard {
     function openPosition(address start_token, uint256 collateral, uint256 borrow, address pos_token, uint256 FakeRate)
         public
         payable
+        nonReentrant
         returns (uint256, uint256, uint256, uint256)
     {
         require(checkLiquidity(start_token, borrow), "insufficient Liquidity");
+        require(start_token != pos_token, "Cannot open position in same token");
         if (start_token == USDC) {
             IUSDC.transferFrom(msg.sender, address(this), collateral);
             IUSDC.approve(address(engine), collateral + borrow);
@@ -291,7 +295,7 @@ contract TradeFX is ERC20, ReentrancyGuard {
         return (PositionIDCounter, liquidation_barrier, insolvency_barrier, barrier_increase_per_10_000_seconds); // add these two
     }
 
-    function closePosition(uint256 position_id, uint256 FakeRate) public {
+    function closePosition(uint256 position_id, uint256 FakeRate) public nonReentrant {
         require(msg.sender == IDToPosition[position_id].user, "Not Your Position");
         if (checkSolvency(position_id, FakeRate) == Solvency.LIQUIDATABLE) {
             liquidate(position_id, FakeRate);
@@ -312,8 +316,17 @@ contract TradeFX is ERC20, ReentrancyGuard {
                     user_pos_arr[i] = user_pos_arr[user_pos_arr.length - 1];
                     user_pos_arr.pop();
                     UserPositions[msg.sender] = user_pos_arr;
+                    break;
                 }
             }
+        }
+
+        if (IDToPosition[position_id].pos_token == USDC) {
+            IUSDC.approve(address(engine), IDToPosition[position_id].pos_token_amount);
+        }
+
+        if (IDToPosition[position_id].pos_token == EURC) {
+            IEURC.approve(address(engine), IDToPosition[position_id].pos_token_amount);
         }
 
         uint256 amount = engine.swapExactTokensForTokens(
@@ -357,7 +370,7 @@ contract TradeFX is ERC20, ReentrancyGuard {
         delete IDToPosition[position_id];
     }
 
-    function liquidate(uint256 position_id, uint256 FakeRate) public {
+    function liquidate(uint256 position_id, uint256 FakeRate) public nonReentrant {
         if (checkSolvency(position_id, FakeRate) == Solvency.INSOLVENT) {
             handleInsolvency(position_id, FakeRate);
             return;
@@ -375,8 +388,17 @@ contract TradeFX is ERC20, ReentrancyGuard {
                     user_pos_arr[i] = user_pos_arr[user_pos_arr.length - 1];
                     user_pos_arr.pop();
                     UserPositions[user] = user_pos_arr;
+                    break;
                 }
             }
+        }
+
+        if (IDToPosition[position_id].pos_token == USDC) {
+            IUSDC.approve(address(engine), IDToPosition[position_id].pos_token_amount);
+        }
+
+        if (IDToPosition[position_id].pos_token == EURC) {
+            IEURC.approve(address(engine), IDToPosition[position_id].pos_token_amount);
         }
 
         uint256 amount = engine.swapExactTokensForTokens(
@@ -449,11 +471,20 @@ contract TradeFX is ERC20, ReentrancyGuard {
                     user_pos_arr[i] = user_pos_arr[user_pos_arr.length - 1];
                     user_pos_arr.pop();
                     UserPositions[user] = user_pos_arr;
+                    break;
                 }
             }
         }
 
-        uint256 _ = engine.swapExactTokensForTokens(
+        if (IDToPosition[position_id].pos_token == USDC) {
+            IUSDC.approve(address(engine), IDToPosition[position_id].pos_token_amount);
+        }
+
+        if (IDToPosition[position_id].pos_token == EURC) {
+            IEURC.approve(address(engine), IDToPosition[position_id].pos_token_amount);
+        }
+
+        engine.swapExactTokensForTokens(
             IDToPosition[position_id].pos_token,
             IDToPosition[position_id].start_token,
             IDToPosition[position_id].pos_token_amount,
@@ -539,38 +570,46 @@ contract TradeFX is ERC20, ReentrancyGuard {
         return price;
     }
 
-    function buyLPTWithUSDC(uint256 amount, address recipient, uint256 FakeRate) public {
+    function buyLPTWithUSDC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
         uint256 price = getUSDCPrice(amount, FakeRate);
         IUSDC.transferFrom(msg.sender, address(this), price);
         _mint(recipient, amount);
         uint256 rebalance_amount = price / 2; // keep a rough 1:1 USDC to EURC ratio in pool
+        IUSDC.approve(address(engine), rebalance_amount);
         engine.swapExactTokensForTokens(USDC, EURC, rebalance_amount, address(this), FakeRate);
         emit LPTokenPurchased(recipient, USDC, price, amount);
     }
 
-    function buyLPTWithEURC(uint256 amount, address recipient, uint256 FakeRate) public {
+    function buyLPTWithEURC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
         uint256 price = getEURCPrice(amount, FakeRate);
         IEURC.transferFrom(msg.sender, address(this), price);
         _mint(recipient, amount);
         uint256 rebalance_amount = price / 2; // keep a rough 1:1 EURC to USDC ratio in pool
+        IEURC.approve(address(engine), rebalance_amount);
         engine.swapExactTokensForTokens(EURC, USDC, rebalance_amount, address(this), FakeRate);
         emit LPTokenPurchased(recipient, EURC, price, amount);
     }
 
-    function sellLPTForUSDC(uint256 amount, address recipient, uint256 FakeRate) public {
+    function sellLPTForUSDC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
         uint256 price = getUSDCPrice(amount, FakeRate);
+        uint256 availableUSDC = IUSDC.balanceOf(address(this)) - USDCBorrowedFromEURC - USDCCollateral;
+        require(availableUSDC >= price, "Run on the bank situation");
         _burn(msg.sender, amount);
         IUSDC.transfer(recipient, price);
         uint256 rebalance_amount = price / 2; // keep a rough 1:1 EURC to USDC ratio in pool
+        IEURC.approve(address(engine), rebalance_amount);
         engine.swapExactTokensForTokens(EURC, USDC, rebalance_amount, address(this), FakeRate);
         emit LPTokenSold(recipient, USDC, price, amount);
     }
 
-    function sellLPTForEURC(uint256 amount, address recipient, uint256 FakeRate) public {
+    function sellLPTForEURC(uint256 amount, address recipient, uint256 FakeRate) public nonReentrant {
         uint256 price = getEURCPrice(amount, FakeRate);
+        uint256 availableEURC = IEURC.balanceOf(address(this)) - EURCBorrowedFromUSDC - EURCCollateral;
+        require(availableEURC >= price, "Run on the bank situation");
         _burn(msg.sender, amount);
         IEURC.transfer(recipient, price);
         uint256 rebalance_amount = price / 2; // keep a rough 1:1 EURC to USDC ratio in pool
+        IUSDC.approve(address(engine), rebalance_amount);
         engine.swapExactTokensForTokens(USDC, EURC, rebalance_amount, address(this), FakeRate);
         emit LPTokenSold(recipient, EURC, price, amount);
     }
