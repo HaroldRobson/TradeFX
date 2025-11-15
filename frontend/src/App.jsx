@@ -5,24 +5,38 @@ import ExchangeChart from "./components/ExchangeChart";
 import OnrampPayment from "./components/OnrampPayment";
 import TradingInterface from "./components/TradingInterface";
 import WalletAuth from "./components/WalletAuth";
+import CircleWalletAuth from "./components/CircleWalletAuth";
 
 function App() {
   const [activeTab, setActiveTab] = useState("trade");
   const address = useAddress();
+  const [circleWalletConnected, setCircleWalletConnected] = useState(false);
 
   // Redirect to main.html when wallet is connected
   useEffect(() => {
-    if (address) {
+    if (address || circleWalletConnected) {
       // Small delay to ensure connection is fully established
       const timer = setTimeout(() => {
         window.location.href = '/main.html';
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [address]);
+  }, [address, circleWalletConnected]);
+
+  const handleCircleWalletSuccess = (result) => {
+    console.log("Circle wallet created successfully:", result);
+    // Store Circle wallet info
+    if (result.walletId) {
+      localStorage.setItem("circleWalletId", result.walletId);
+    }
+    if (result.userToken) {
+      localStorage.setItem("circleUserToken", result.userToken);
+    }
+    setCircleWalletConnected(true);
+  };
 
   // Show login screen if wallet is not connected
-  if (!address) {
+  if (!address && !circleWalletConnected) {
     return (
       <div className="App">
         <div style={{
@@ -40,36 +54,65 @@ function App() {
             borderRadius: '16px',
             padding: '3rem',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            maxWidth: '500px',
-            width: '100%',
-            textAlign: 'center'
+            maxWidth: '600px',
+            width: '100%'
           }}>
             <h1 style={{ 
               marginBottom: '1rem', 
               color: '#1a1a1a',
-              fontSize: '2.5rem'
+              fontSize: '2.5rem',
+              textAlign: 'center'
             }}>
               TradeFX
             </h1>
             <p style={{ 
               marginBottom: '2rem', 
               color: '#666',
-              fontSize: '1.1rem'
+              fontSize: '1.1rem',
+              textAlign: 'center'
             }}>
-              Connect your wallet to start trading
+              Choose your preferred wallet connection method
             </p>
-            <ConnectWallet
-              theme="light"
-              btnTitle="Connect Wallet"
-              modalTitle="Sign In to Trade FX"
-              modalSize="wide"
-              welcomeScreen={{
-                title: "Welcome to Trade FX",
-                subtitle: "Connect your wallet to get started",
-              }}
-              termsOfServiceUrl="https://tradefx.example.com/terms"
-              privacyPolicyUrl="https://tradefx.example.com/privacy"
-            />
+            
+            {/* Thirdweb Connect Wallet Section */}
+            <div style={{
+              marginBottom: '2rem',
+              paddingBottom: '2rem',
+              borderBottom: '2px solid #e5e7eb'
+            }}>
+              <h2 style={{
+                marginBottom: '1rem',
+                color: '#1a1a1a',
+                fontSize: '1.125rem',
+                fontWeight: '600'
+              }}>
+                Connect Existing Wallet
+              </h2>
+              <p style={{
+                marginBottom: '1rem',
+                color: '#666',
+                fontSize: '0.875rem'
+              }}>
+                Connect using MetaMask, WalletConnect, or other Web3 wallets
+              </p>
+              <ConnectWallet
+                theme="light"
+                btnTitle="Connect Wallet"
+                modalTitle="Sign In to Trade FX"
+                modalSize="wide"
+                welcomeScreen={{
+                  title: "Welcome to Trade FX",
+                  subtitle: "Connect your wallet to get started",
+                }}
+                termsOfServiceUrl="https://tradefx.example.com/terms"
+                privacyPolicyUrl="https://tradefx.example.com/privacy"
+              />
+            </div>
+
+            {/* Circle User-Controlled Wallet Section */}
+            <div>
+              <CircleWalletAuth onSuccess={handleCircleWalletSuccess} />
+            </div>
           </div>
           <div style={{
             maxWidth: '1200px',

@@ -8,6 +8,8 @@ export default defineConfig({
       crypto: 'crypto-browserify',
       stream: 'stream-browserify',
       buffer: 'buffer',
+      util: 'util',
+      process: 'process/browser',
     },
   },
   define: {
@@ -15,7 +17,7 @@ export default defineConfig({
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['buffer'],
+    include: ['buffer', 'util', 'process'],
     esbuildOptions: {
       define: {
         global: 'globalThis',
