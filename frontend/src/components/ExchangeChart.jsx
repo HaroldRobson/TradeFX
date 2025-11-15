@@ -35,7 +35,7 @@ const fetchKrakenOHLC = async (timeframe = "1M") => {
   // For shorter timeframes, use hourly data for better granularity
   let interval = 60; // 1 hour
   let since = null;
-  
+
   if (timeframe === "1H") {
     interval = 1; // 1 minute for 1 hour view (60 candlesticks)
     // For 1 hour, get data from 2 hours ago to ensure we have enough
@@ -211,7 +211,7 @@ const ExchangeChart = ({ compact = false }) => {
       if (!containerRef.current || chartRef.current) return;
 
       const container = containerRef.current;
-      
+
       // Ensure container has dimensions
       if (container.clientWidth === 0 || container.clientHeight === 0) {
         // Wait for next frame to ensure container is sized
@@ -247,6 +247,10 @@ const ExchangeChart = ({ compact = false }) => {
           },
           timeScale: {
             borderVisible: false,
+          },
+          // 🔽 force 4 decimal places for axis & crosshair labels
+          localization: {
+            priceFormatter: (price) => price.toFixed(4),
           },
         });
 
@@ -327,6 +331,12 @@ const ExchangeChart = ({ compact = false }) => {
           bottomColor: "rgba(37,99,235, 0.04)",
           lineColor: "#2563eb",
           lineWidth: 2,
+          // 🔽 4-decimal formatting on this series
+          priceFormat: {
+            type: "price",
+            precision: 4,
+            minMove: 0.0001,
+          },
         });
       } else {
         // Use the new v5 API: addSeries(SeriesType, options)
@@ -337,9 +347,15 @@ const ExchangeChart = ({ compact = false }) => {
           borderUpColor: "#10b981",
           wickDownColor: "#ef4444",
           wickUpColor: "#10b981",
+          // 🔽 4-decimal formatting for candles too
+          priceFormat: {
+            type: "price",
+            precision: 4,
+            minMove: 0.0001,
+          },
         });
       }
-      
+
       if (series) {
         series.setData(seriesData);
         seriesRef.current = series;
@@ -359,9 +375,9 @@ const ExchangeChart = ({ compact = false }) => {
 
     const connect = () => {
       if (!isMounted) return;
-      
+
       setWsStatus("connecting");
-      
+
       try {
         ws = new WebSocket(KRAKEN_URL);
 
@@ -379,7 +395,7 @@ const ExchangeChart = ({ compact = false }) => {
 
         ws.onmessage = (event) => {
           if (!isMounted) return;
-          
+
           let msg;
           try {
             msg = JSON.parse(event.data);
@@ -475,7 +491,7 @@ const ExchangeChart = ({ compact = false }) => {
           ws.onerror = null;
           ws.onmessage = null;
           ws.onopen = null;
-          
+
           // Only close if the connection is open
           // If it's still connecting, the browser will handle the cleanup
           if (ws.readyState === WebSocket.OPEN) {
@@ -497,15 +513,15 @@ const ExchangeChart = ({ compact = false }) => {
     livePrice != null
       ? livePrice
       : latestValue != null
-      ? latestValue
-      : null;
+        ? latestValue
+        : null;
 
   const wsDotColor =
     wsStatus === "live"
       ? "#22c55e"
       : wsStatus === "connecting"
-      ? "#f97316"
-      : "#ef4444";
+        ? "#f97316"
+        : "#ef4444";
 
   return (
     <div className={`exchange-chart ${compact ? "compact" : ""}`}>
@@ -537,8 +553,8 @@ const ExchangeChart = ({ compact = false }) => {
                 {wsStatus === "live"
                   ? "Live via Kraken (USDC/EUR proxy)"
                   : wsStatus === "connecting"
-                  ? "Connecting…"
-                  : "Reconnecting…"}
+                    ? "Connecting…"
+                    : "Reconnecting…"}
               </span>
             </p>
           )}
