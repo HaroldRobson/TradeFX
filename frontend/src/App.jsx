@@ -6,6 +6,7 @@ import OnrampPayment from "./components/OnrampPayment";
 import TradingInterface from "./components/TradingInterface";
 import WalletAuth from "./components/WalletAuth";
 import CircleWalletAuth from "./components/CircleWalletAuth";
+import EurcUsdcTicker from "./components/EurcUsdcTicker";
 
 function App() {
   const [activeTab, setActiveTab] = useState("trade");
