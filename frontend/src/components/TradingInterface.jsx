@@ -3,18 +3,17 @@ import { useState } from "react";
 function TradingInterface() {
   const [amount, setAmount] = useState("");
   const [leverage, setLeverage] = useState(1);
-  const [orderType, setOrderType] = useState("market");
 
   const handleTrade = (direction) => {
-    console.log(`${direction} trade:`, { amount, leverage, orderType });
+    console.log(`${direction} trade:`, { amount, leverage });
   };
 
   return (
     <div className="trading-interface">
-      <h2>Trade Forex</h2>
+      <h2>Trade</h2>
       <div className="trading-form">
         <div className="form-group">
-          <label>Amount (USD)</label>
+          <label>Amount (USDC)</label>
           <input
             type="number"
             value={amount}
@@ -31,13 +30,6 @@ function TradingInterface() {
             value={leverage}
             onChange={(e) => setLeverage(e.target.value)}
           />
-        </div>
-        <div className="form-group">
-          <label>Order Type</label>
-          <select value={orderType} onChange={(e) => setOrderType(e.target.value)}>
-            <option value="market">Market</option>
-            <option value="limit">Limit</option>
-          </select>
         </div>
         <div className="trade-buttons">
           <button className="buy-button" onClick={() => handleTrade("BUY")}>

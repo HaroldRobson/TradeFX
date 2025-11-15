@@ -18,7 +18,7 @@ function App() {
     if (address || circleWalletConnected) {
       // Small delay to ensure connection is fully established
       const timer = setTimeout(() => {
-        window.location.href = '/main.html';
+        //window.location.href = '/index.html';
       }, 500);
       return () => clearTimeout(timer);
     }

@@ -139,7 +139,7 @@ const OnrampPayment = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>From:</span>
-                <span style={{ fontWeight: '600', color: '#1a1a1a' }}>EUR</span>
+                <span style={{ fontWeight: '600', color: '#1a1a1a' }}>EURC</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>To:</span>
