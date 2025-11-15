@@ -57,6 +57,8 @@ const useChartData = (pair) => {
       setLoading(true);
       setError(null);
       try {
+        // For USDC/EURC, we use USDC price in EUR (which approximates EURC)
+        // For EURC/USDT, we use USDT price in EUR and invert
         const prices = await fetchMarketData();
         const invert = pair === "EURC_USDT";
         if (!active) return;
@@ -88,7 +90,7 @@ const ExchangeChart = ({ compact = false }) => {
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
   const [chartType, setChartType] = useState("line");
-  const [pair, setPair] = useState("USDT_EURC");
+  const [pair, setPair] = useState("USDC_EURC");
   const { data, loading, error } = useChartData(pair);
 
   const latestValue = useMemo(() => {
@@ -168,7 +170,7 @@ const ExchangeChart = ({ compact = false }) => {
     chartRef.current.timeScale().fitContent();
   }, [chartType, data]);
 
-  const formatPairLabel = pair === "USDT_EURC" ? "USDT → EURC" : "EURC → USDT";
+  const formatPairLabel = pair === "USDC_EURC" ? "USDC / EURC" : "EURC / USDT";
 
   return (
     <div className={`exchange-chart ${compact ? "compact" : ""}`}>
@@ -181,10 +183,10 @@ const ExchangeChart = ({ compact = false }) => {
         <div className="chart-controls">
           <div className="control-group">
             <button
-              className={pair === "USDT_EURC" ? "active" : ""}
-              onClick={() => setPair("USDT_EURC")}
+              className={pair === "USDC_EURC" ? "active" : ""}
+              onClick={() => setPair("USDC_EURC")}
             >
-              USDT / EURC
+              USDC / EURC
             </button>
             <button
               className={pair === "EURC_USDT" ? "active" : ""}
@@ -204,7 +206,7 @@ const ExchangeChart = ({ compact = false }) => {
               className={chartType === "candles" ? "active" : ""}
               onClick={() => setChartType("candles")}
             >
-              Candles
+              Candlesticks
             </button>
           </div>
         </div>

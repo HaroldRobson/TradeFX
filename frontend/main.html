@@ -206,27 +206,66 @@
         });
       });
 
-      // New logout functionality
+      // Enhanced logout functionality
       const logoutBtn = document.getElementById('logout-btn');
       logoutBtn.addEventListener('click', async () => {
-        if (window.ethereum) {
-          try {
-            // Attempt to revoke permissions (works with some wallets like MetaMask)
-            await window.ethereum.request({
-              method: 'wallet_revokePermissions',
-              params: [{ eth_accounts: {} }],
-            });
-          } catch (error) {
-            console.error('Failed to revoke permissions:', error);
+        try {
+          // Handle MetaMask and other EIP-1193 wallets
+          if (window.ethereum) {
+            try {
+              // Attempt to revoke permissions (works with some wallets like MetaMask)
+              await window.ethereum.request({
+                method: 'wallet_revokePermissions',
+                params: [{ eth_accounts: {} }],
+              });
+            } catch (error) {
+              // Some wallets don't support revokePermissions, that's okay
+              console.log('Wallet permissions revoke not supported or failed:', error);
+            }
           }
+
+          // Clear Thirdweb connection data (if using Thirdweb)
+          try {
+            // Clear Thirdweb-specific storage keys
+            const thirdwebKeys = Object.keys(localStorage).filter(key => 
+              key.includes('thirdweb') || 
+              key.includes('wallet') || 
+              key.includes('connect') ||
+              key.includes('wc@2') // WalletConnect v2
+            );
+            thirdwebKeys.forEach(key => localStorage.removeItem(key));
+          } catch (error) {
+            console.log('Error clearing Thirdweb data:', error);
+          }
+
+          // Clear all local storage and session storage
+          localStorage.clear();
+          sessionStorage.clear();
+
+          // Clear any indexedDB data related to wallets (WalletConnect uses this)
+          try {
+            if ('indexedDB' in window) {
+              const databases = await indexedDB.databases();
+              databases.forEach(db => {
+                if (db.name && (db.name.includes('wallet') || db.name.includes('wc'))) {
+                  indexedDB.deleteDatabase(db.name);
+                }
+              });
+            }
+          } catch (error) {
+            console.log('Error clearing IndexedDB:', error);
+          }
+
+          // Small delay to ensure cleanup completes
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Redirect to index.html
+          window.location.href = 'index.html';
+        } catch (error) {
+          console.error('Logout error:', error);
+          // Even if there's an error, still redirect
+          window.location.href = 'index.html';
         }
-
-        // Clear any local storage or session data related to connection
-        localStorage.clear();
-        sessionStorage.clear();
-
-        // Redirect to index.html
-        window.location.href = 'index.html';
       });
 
       const { createChart, CrosshairMode } = await import('https://unpkg.com/lightweight-charts@5.0.9/dist/lightweight-charts.standalone.production.js');
