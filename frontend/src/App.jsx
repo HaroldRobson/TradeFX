@@ -55,7 +55,7 @@ function App() {
             borderRadius: '16px',
             padding: '3rem',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            maxWidth: '600px',
+            maxWidth: '1200px',
             width: '100%'
           }}>
             <h1 style={{ 
@@ -75,44 +75,67 @@ function App() {
               Choose your preferred wallet connection method
             </p>
             
-            {/* Thirdweb Connect Wallet Section */}
+            {/* Wallet Connection Options - Side by Side */}
             <div style={{
-              marginBottom: '2rem',
-              paddingBottom: '2rem',
-              borderBottom: '2px solid #e5e7eb'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '2rem',
+              alignItems: 'flex-start'
             }}>
-              <h2 style={{
-                marginBottom: '1rem',
-                color: '#1a1a1a',
-                fontSize: '1.125rem',
-                fontWeight: '600'
+              {/* Thirdweb Connect Wallet Section */}
+              <div style={{
+                flex: 1
               }}>
-                Connect Existing Wallet
-              </h2>
-              <p style={{
-                marginBottom: '1rem',
-                color: '#666',
-                fontSize: '0.875rem'
-              }}>
-                Connect using MetaMask, WalletConnect, or other Web3 wallets
-              </p>
-              <ConnectWallet
-                theme="light"
-                btnTitle="Connect Wallet"
-                modalTitle="Sign In to Trade FX"
-                modalSize="wide"
-                welcomeScreen={{
-                  title: "Welcome to Trade FX",
-                  subtitle: "Connect your wallet to get started",
-                }}
-                termsOfServiceUrl="https://tradefx.example.com/terms"
-                privacyPolicyUrl="https://tradefx.example.com/privacy"
-              />
-            </div>
+                <h2 style={{
+                  marginBottom: '1rem',
+                  color: '#1a1a1a',
+                  fontSize: '1.125rem',
+                  fontWeight: '600'
+                }}>
+                  Connect Existing Wallet
+                </h2>
+                <p style={{
+                  marginBottom: '1rem',
+                  color: '#666',
+                  fontSize: '0.875rem'
+                }}>
+                  Connect using MetaMask, WalletConnect, or other Web3 wallets
+                </p>
+                <ConnectWallet
+                  theme="light"
+                  btnTitle="Connect Wallet"
+                  modalTitle="Sign In to Trade FX"
+                  modalSize="wide"
+                  welcomeScreen={{
+                    title: "Welcome to Trade FX",
+                    subtitle: "Connect your wallet to get started",
+                  }}
+                  termsOfServiceUrl="https://tradefx.example.com/terms"
+                  privacyPolicyUrl="https://tradefx.example.com/privacy"
+                />
+              </div>
 
-            {/* Circle User-Controlled Wallet Section */}
-            <div>
-              <CircleWalletAuth onSuccess={handleCircleWalletSuccess} />
+              {/* Circle User-Controlled Wallet Section */}
+              <div style={{
+                flex: 1
+              }}>
+                <h2 style={{
+                  marginBottom: '1rem',
+                  color: '#1a1a1a',
+                  fontSize: '1.125rem',
+                  fontWeight: '600'
+                }}>
+                  Create Circle Wallet
+                </h2>
+                <p style={{
+                  marginBottom: '1rem',
+                  color: '#666',
+                  fontSize: '0.875rem'
+                }}>
+                  Create a new user-controlled wallet with Circle. You maintain full control of your keys.
+                </p>
+                <CircleWalletAuth onSuccess={handleCircleWalletSuccess} />
+              </div>
             </div>
           </div>
           <div style={{

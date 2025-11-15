@@ -32,9 +32,16 @@ const CircleWalletAuth = ({ onSuccess }) => {
               redirectUri: window.location.origin + "/callback",
               selectAccountPrompt: true,
             },
-            apple: {
-              // Apple config if needed
-            },
+            apple: (() => {
+              try {
+                return import.meta.env.VITE_APPLE_FIREBASE_CONFIG
+                  ? JSON.parse(import.meta.env.VITE_APPLE_FIREBASE_CONFIG)
+                  : undefined;
+              } catch (e) {
+                console.warn("Invalid VITE_APPLE_FIREBASE_CONFIG. Apple login will not be available.", e);
+                return undefined;
+              }
+            })(),
             facebook: {
               appId: import.meta.env.VITE_FACEBOOK_APP_ID || "",
               redirectUri: window.location.origin + "/callback",
@@ -244,9 +251,22 @@ const CircleWalletAuth = ({ onSuccess }) => {
         );
       }
 
+      // Check if response is 404
       if (response.status === 404) {
         throw new Error(
           "Backend API endpoint not found. Please implement the /api/circle/get-app-id endpoint on your backend server. See the README for implementation details."
+        );
+      }
+
+      // Check content type before parsing
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        // Try to get text to see what we actually received
+        const text = await response.text();
+        throw new Error(
+          `Invalid response from server. Expected JSON but received ${contentType || "unknown content type"}. ` +
+          `The endpoint /api/circle/get-app-id may not be implemented. ` +
+          `Response preview: ${text.substring(0, 100)}...`
         );
       }
 
@@ -264,13 +284,16 @@ const CircleWalletAuth = ({ onSuccess }) => {
       try {
         data = await response.json();
       } catch (parseError) {
-        throw new Error("Invalid response from server. Expected JSON but received something else.");
+        throw new Error(
+          "Failed to parse JSON response from server. The /api/circle/get-app-id endpoint may not be returning valid JSON. " +
+          "Please check your backend implementation."
+        );
       }
 
       const { appId } = data;
 
       if (!appId) {
-        throw new Error("App ID not found in server response");
+        throw new Error("App ID not found in server response. The endpoint should return: { appId: 'your-app-id' }");
       }
 
       // Initialize SDK with just appId for social login
@@ -295,6 +318,16 @@ const CircleWalletAuth = ({ onSuccess }) => {
               redirectUri: window.location.origin + "/callback",
               selectAccountPrompt: true,
             },
+            apple: (() => {
+              try {
+                return import.meta.env.VITE_APPLE_FIREBASE_CONFIG
+                  ? JSON.parse(import.meta.env.VITE_APPLE_FIREBASE_CONFIG)
+                  : undefined;
+              } catch (e) {
+                console.warn("Invalid VITE_APPLE_FIREBASE_CONFIG. Apple login will not be available.", e);
+                return undefined;
+              }
+            })(),
             facebook: {
               appId: import.meta.env.VITE_FACEBOOK_APP_ID || "",
               redirectUri: window.location.origin + "/callback",
