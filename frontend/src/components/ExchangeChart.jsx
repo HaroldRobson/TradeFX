@@ -12,6 +12,21 @@ const TIMEFRAMES = {
   ALL: null,
 };
 
+// Currency pair options
+const CURRENCY_PAIRS = [
+  { value: "USDC_EURC", label: "USDC / EURC" },
+  { value: "EURC_USDC", label: "EURC / USDC" },
+];
+
+// Chart type options
+const CHART_TYPES = [
+  { value: "line", label: "Line" },
+  { value: "candles", label: "Candlesticks" },
+];
+
+// Timeframe options (ordered)
+const TIMEFRAME_OPTIONS = ["1H", "1D", "1W", "1M", "6M", "1Y", "ALL"];
+
 const MAX_POINTS = 800;
 
 const fetchKrakenOHLC = async (timeframe = "1M") => {
@@ -531,23 +546,20 @@ const ExchangeChart = ({ compact = false }) => {
         <div className="chart-controls">
           {/* Pair toggle */}
           <div className="control-group">
-            <button
-              className={pair === "USDC_EURC" ? "active" : ""}
-              onClick={() => setPair("USDC_EURC")}
-            >
-              USDC / EURC
-            </button>
-            <button
-              className={pair === "EURC_USDC" ? "active" : ""}
-              onClick={() => setPair("EURC_USDC")}
-            >
-              EURC / USDC
-            </button>
+            {CURRENCY_PAIRS.map((pairOption) => (
+              <button
+                key={pairOption.value}
+                className={pair === pairOption.value ? "active" : ""}
+                onClick={() => setPair(pairOption.value)}
+              >
+                {pairOption.label}
+              </button>
+            ))}
           </div>
 
           {/* Timeframe buttons */}
           <div className="control-group">
-            {["1H", "1D", "1W", "1M", "6M", "1Y", "ALL"].map((tf) => (
+            {TIMEFRAME_OPTIONS.map((tf) => (
               <button
                 key={tf}
                 className={timeframe === tf ? "active" : ""}
@@ -560,18 +572,15 @@ const ExchangeChart = ({ compact = false }) => {
 
           {/* Chart type */}
           <div className="control-group">
-            <button
-              className={chartType === "line" ? "active" : ""}
-              onClick={() => setChartType("line")}
-            >
-              Line
-            </button>
-            <button
-              className={chartType === "candles" ? "active" : ""}
-              onClick={() => setChartType("candles")}
-            >
-              Candlesticks
-            </button>
+            {CHART_TYPES.map((typeOption) => (
+              <button
+                key={typeOption.value}
+                className={chartType === typeOption.value ? "active" : ""}
+                onClick={() => setChartType(typeOption.value)}
+              >
+                {typeOption.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
