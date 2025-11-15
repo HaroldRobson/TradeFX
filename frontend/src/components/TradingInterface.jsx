@@ -12,26 +12,28 @@ function TradingInterface({ pair = "USDC_EURC" }) {
     setBorrowed(Number(amount) * (10 ** 6) * leverage);
   };
 
+  const { data: ticker, status } = useKrakenTicker();
+
+  const effectiveQuotes = useMemo(() => {
+    if (!ticker) return null;
+
+    if (pair === "USDC_EURC") {
+      return {
+        bid: ticker.bid,
+        ask: ticker.ask,
+      };
+    } else {
+      // EURC / USDC inverse
+      return {
+        bid: 1 / ticker.ask,
+        ask: 1 / ticker.bid,
+      };
+    }
+  }, [ticker, pair]);
+
   const handleTrade = (direction) => {
     calculateCollateralAndBorrowed();
-    const { data: ticker, status } = useKrakenTicker();
 
-    const effectiveQuotes = useMemo(() => {
-      if (!ticker) return null;
-
-      if (pair === "USDC_EURC") {
-        return {
-          bid: ticker.bid,
-          ask: ticker.ask,
-        };
-      } else {
-        // EURC / USDC inverse
-        return {
-          bid: 1 / ticker.ask,
-          ask: 1 / ticker.bid,
-        };
-      }
-    }, [ticker, pair]);
     if (!effectiveQuotes) {
       console.warn("No live price yet, cannot price trade");
       return;
