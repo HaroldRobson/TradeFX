@@ -29,8 +29,12 @@ Then update the following values in `.env`:
   - **Note**: This API key is used on your backend server, not in the frontend
   - The frontend communicates with your backend API which uses this key
 - **VITE_GOOGLE_CLIENT_ID**: Google OAuth Client ID (for Google social login)
-- **VITE_FACEBOOK_APP_ID**: Facebook App ID (for Facebook social login)
-
+- **VITE_APPLE_FIREBASE_CONFIG**: Firebase configuration for Apple Sign In (JSON string)
+  - Apple login uses Firebase configuration
+  - Get this from [Firebase Console](https://console.firebase.google.com/)
+  - Should be a JSON string of your Firebase config object
+  - Example: `{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}`
+  
 #### Optional Variables (for Onramp):
 
 - **VITE_ARC_API_KEY**: Get your API key from [Arc](https://arc.market)
