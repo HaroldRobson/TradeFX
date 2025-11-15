@@ -1,111 +1,1400 @@
-
-╭-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------╮
-| Type        | Signature                                                                                                                                            | Selector                                                           |
-+=========================================================================================================================================================================================================================================+
-| event       | Approval(address,address,uint256)                                                                                                                    | 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925 |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| event       | InsolventPositionClosed(address,uint256,uint256,address,uint256,uint256,address,uint256,uint256,uint256,uint256,uint256)                             | 0xb6492cdc3b7bf4bdee23369feffb44989bb8100983544d0b8badfc4429e8443c |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| event       | LPTokenPurchased(address,address,uint256,uint256)                                                                                                    | 0x830d7d0682f27f475ed5bc81a538a2a7bfcd91df3d950964d8e121b3dbcf08e4 |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| event       | LPTokenSold(address,address,uint256,uint256)                                                                                                         | 0x2617a84068409ecc98c7f34e5d42717c12e2c3cd8d5b0470705d672507ff9889 |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| event       | NewPosition(address,uint256,uint256,address,uint256,uint256,address,uint256,uint256,uint256,uint256,uint256)                                         | 0xf3a2aed32837d44b867df316887419084a9581005de3744fc47be88932de6d9f |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| event       | PositionClosed(address,uint256,uint256,address,uint256,uint256,address,uint256,uint256,uint256,uint256,uint256)                                      | 0x62cd358d5d0a1002aca43d9cb3203b2bd023a0318ea9bdac6bbf2dc25436e4bd |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| event       | PositionLiquidated(address,uint256,uint256,address,uint256,uint256,address,uint256,uint256,uint256,uint256,uint256,address)                          | 0x5559f5fff7c6153619b32cb6a4f12e747321e89d333dc93d9161982f59a21ace |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| event       | Transfer(address,address,uint256)                                                                                                                    | 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| error       | ERC20InsufficientAllowance(address,uint256,uint256)                                                                                                  | 0xfb8f41b2                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| error       | ERC20InsufficientBalance(address,uint256,uint256)                                                                                                    | 0xe450d38c                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| error       | ERC20InvalidApprover(address)                                                                                                                        | 0xe602df05                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| error       | ERC20InvalidReceiver(address)                                                                                                                        | 0xec442f05                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| error       | ERC20InvalidSender(address)                                                                                                                          | 0x96c6fd1e                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| error       | ERC20InvalidSpender(address)                                                                                                                         | 0x94280d62                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| error       | ReentrancyGuardReentrantCall()                                                                                                                       | 0x3ee5aeb5                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | EURCBorrowed() view returns (uint256)                                                                                                                | 0xf97f04e6                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | EURCBorrowedFromUSDC() view returns (uint256)                                                                                                        | 0x65c68f25                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | EURCCollateral() view returns (uint256)                                                                                                              | 0xd4d23a41                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | IDToPosition(uint256) view returns (address,uint256,uint256,uint256,uint256,address,uint256,uint256,address,uint256,uint256,uint256,uint256,uint256) | 0x29d9b645                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | LendingRate() view returns (uint256)                                                                                                                 | 0x8d5f387a                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | LiquidationBuffer() view returns (uint256)                                                                                                           | 0xe192ae0d                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | LiquidatorFee() view returns (uint256)                                                                                                               | 0xdc001cec                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | PositionIDCounter() view returns (uint256)                                                                                                           | 0x5a5b37f1                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | USDCBorrowed() view returns (uint256)                                                                                                                | 0x889bc0ec                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | USDCBorrowedFromEURC() view returns (uint256)                                                                                                        | 0xdd47a605                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | USDCCollateral() view returns (uint256)                                                                                                              | 0x114bd7ae                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | UserPositions(address,uint256) view returns (uint256)                                                                                                | 0xa2e28adc                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | allowance(address,address) view returns (uint256)                                                                                                    | 0xdd62ed3e                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | approve(address,uint256) nonpayable returns (bool)                                                                                                   | 0x095ea7b3                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | balanceOf(address) view returns (uint256)                                                                                                            | 0x70a08231                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | buyLPTWithEURC(uint256,address,uint256) nonpayable                                                                                                   | 0x567174c4                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | buyLPTWithUSDC(uint256,address,uint256) nonpayable                                                                                                   | 0xa9e1f6b3                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | calculateLendingFees(uint256) view returns (uint256)                                                                                                 | 0xacd1ce1f                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | calculateLiquidatorFee(uint256,uint256) view returns (uint256)                                                                                       | 0x36d3a673                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | calculateOwedWithFees(uint256) view returns (uint256)                                                                                                | 0x7e479b7b                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | checkSolvency(uint256,uint256) view returns (TradeFX.Solvency)                                                                                       | 0x7ffaa697                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | closePosition(uint256,uint256) nonpayable                                                                                                            | 0x2d6ce61d                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | decimals() view returns (uint8)                                                                                                                      | 0x313ce567                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | getEURCPrice(uint256,uint256) view returns (uint256)                                                                                                 | 0xe526eb86                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | getEURCPricePerLPT(uint256) view returns (uint256)                                                                                                   | 0x60fec872                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | getUSDCPrice(uint256,uint256) view returns (uint256)                                                                                                 | 0xfe164942                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | getUSDCPricePerLPT(uint256) view returns (uint256)                                                                                                   | 0xcc845a1d                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | getValueOfPool(uint256,address) view returns (uint256)                                                                                               | 0x32930094                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | liquidate(uint256,uint256) nonpayable                                                                                                                | 0xd296d1f1                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | name() view returns (string)                                                                                                                         | 0x06fdde03                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | openPosition(address,uint256,uint256,address,uint256) payable returns (uint256,uint256,uint256,uint256)                                              | 0x495acdd9                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | sellLPTForEURC(uint256,address,uint256) nonpayable                                                                                                   | 0x91f1096e                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | sellLPTForUSDC(uint256,address,uint256) nonpayable                                                                                                   | 0xf494cc1a                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | symbol() view returns (string)                                                                                                                       | 0x95d89b41                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | totalSupply() view returns (uint256)                                                                                                                 | 0x18160ddd                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | transfer(address,uint256) nonpayable returns (bool)                                                                                                  | 0xa9059cbb                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| function    | transferFrom(address,address,uint256) nonpayable returns (bool)                                                                                      | 0x23b872dd                                                         |
-|-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------|
-| constructor | constructor(uint256,address,address,address,uint256,uint256,uint256) nonpayable                                                                      |                                                                    |
-╰-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------╯
-
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "initialSupply",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "usdc",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "eurc",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "FXENGINE",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_lending_rate",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_liquidation_buffer",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_liquidator_fee",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_testnet_mode",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "EURCBorrowed",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "EURCBorrowedFromUSDC",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "EURCCollateral",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "FXEngineAddress",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "IDToPosition",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "start_token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "collateral",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "converted_collateral",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "borrowed",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "converted_borrowed",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "pos_token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "pos_token_amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "user",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "block_timestamp",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "lending_rate",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "liquidation_barrier",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "insolvency_barrier",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "barrier_increase_per_10_000_seconds",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "LendingRate",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "LiquidationBuffer",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "LiquidatorFee",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "PositionIDCounter",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "TESTNET_MODE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "USDCBorrowed",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "USDCBorrowedFromEURC",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "USDCCollateral",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "UserPositions",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "allowance",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "approve",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "balanceOf",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "buyLPTWithEURC",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "buyLPTWithUSDC",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "calculateLendingFees",
+    "inputs": [
+      {
+        "name": "position_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "calculateLiquidatorFee",
+    "inputs": [
+      {
+        "name": "position_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "calculateOwedWithFees",
+    "inputs": [
+      {
+        "name": "position_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "checkSolvency",
+    "inputs": [
+      {
+        "name": "position_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "enum TradeFX.Solvency"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "closePosition",
+    "inputs": [
+      {
+        "name": "position_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "decimals",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "engine",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IFXEngine"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getEURCPrice",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getEURCPricePerLPT",
+    "inputs": [
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getUSDCPrice",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getUSDCPricePerLPT",
+    "inputs": [
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getValueOfPool",
+    "inputs": [
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "liquidate",
+    "inputs": [
+      {
+        "name": "position_id",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "name",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "openPosition",
+    "inputs": [
+      {
+        "name": "start_token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "collateral",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "borrow",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "pos_token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "sellLPTForEURC",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "sellLPTForUSDC",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "FakeRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "symbol",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "totalSupply",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "transfer",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "Approval",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "spender",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "InsolventPositionClosed",
+    "inputs": [
+      {
+        "name": "start_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "collateral",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "borrowed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "pos_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "pos_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "id",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "block_timestamp",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "lending_rate",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "liquidation_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "insolvency_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "barrier_increase_per_10_000_seconds",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LPTokenPurchased",
+    "inputs": [
+      {
+        "name": "purchaser",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "purchase_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "purchase_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "lp_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LPTokenSold",
+    "inputs": [
+      {
+        "name": "seller",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "sale_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "sale_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "lp_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "NewPosition",
+    "inputs": [
+      {
+        "name": "start_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "collateral",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "borrowed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "pos_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "pos_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "id",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "block_timestamp",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "lending_rate",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "liquidation_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "insolvency_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "barrier_increase_per_10_000_seconds",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PositionClosed",
+    "inputs": [
+      {
+        "name": "start_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "collateral",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "borrowed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "pos_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "pos_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "id",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "block_timestamp",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "lending_rate",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "liquidation_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "insolvency_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "barrier_increase_per_10_000_seconds",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PositionLiquidated",
+    "inputs": [
+      {
+        "name": "start_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "collateral",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "borrowed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "pos_token",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "pos_token_amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "id",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "block_timestamp",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "lending_rate",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "liquidation_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "insolvency_barrier",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "barrier_increase_per_10_000_seconds",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "liquidator",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Transfer",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "ERC20InsufficientAllowance",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "allowance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InsufficientBalance",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidApprover",
+    "inputs": [
+      {
+        "name": "approver",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidReceiver",
+    "inputs": [
+      {
+        "name": "receiver",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidSender",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidSpender",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
+    "inputs": []
+  }
+]
