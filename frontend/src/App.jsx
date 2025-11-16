@@ -149,52 +149,6 @@ function App() {
   if (!address && !circleWalletConnected) {
     return (
       <div className="App">
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          padding: '2rem',
-          backgroundColor: '#f5f5f5',
-          gap: '2rem'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '3rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            maxWidth: '1200px',
-            width: '100%'
-          }}>
-            <h1 style={{
-              marginBottom: '1rem',
-              color: '#1a1a1a',
-              fontSize: '2.5rem',
-              textAlign: 'center'
-            }}>
-              TradeFX
-            </h1>
-            <p style={{
-              marginBottom: '2rem',
-              color: '#666',
-              fontSize: '1.1rem',
-              textAlign: 'center'
-            }}>
-              Choose your preferred wallet connection method
-            </p>
-
-            {/* Wallet Connection Options - Side by Side */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '2rem',
-              alignItems: 'flex-start'
-            }}>
-// Show login screen if wallet is not connected
-if (!address && !circleWalletConnected) {
-  return (
-    <div className="App">
       <div
         style={{
           display: "flex",
@@ -238,15 +192,16 @@ if (!address && !circleWalletConnected) {
           </h1>
         </div>
 
-        {/* Main Content Section - ~55% height */}
+          {/* Main Content Section */}
         <div
           style={{
             display: "flex",
-            height: "68vh",
+              // height: "60vh",           // ⬅ remove this line
             gap: "2rem",
             margin: "0 auto",
             width: "100%",
             maxWidth: "1400px",
+              alignItems: "flex-start",    // ⬅ add this for top alignment
           }}
         >
           {/* Left Side - ExchangeChart (60% width) */}
@@ -260,7 +215,7 @@ if (!address && !circleWalletConnected) {
               overflow: "hidden",
             }}
           >
-            <ExchangeChart compact={false} />
+              <ExchangeChart compact />
           </div>
 
           {/* Right Side - Sign In Options (30% width) */}
@@ -318,18 +273,25 @@ if (!address && !circleWalletConnected) {
                 >
                   Connect using MetaMask, WalletConnect, or other Web3 wallets
                 </p>
-                <ConnectWallet
-                  theme="light"
-                  btnTitle="Connect Wallet"
-                  modalTitle="Sign In to Trade FX"
-                  modalSize="wide"
-                  welcomeScreen={{
-                    title: "Welcome to Trade FX",
-                    subtitle: "Connect your wallet to get started",
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",  // center horizontally
                   }}
-                  termsOfServiceUrl="https://tradefx.example.com/terms"
-                  privacyPolicyUrl="https://tradefx.example.com/privacy"
-                />
+                >
+                  <ConnectWallet
+                    theme="light"
+                    btnTitle="Connect Wallet"
+                    modalTitle="Sign In to Trade FX"
+                    modalSize="wide"
+                    welcomeScreen={{
+                      title: "Welcome to Trade FX",
+                      subtitle: "Connect your wallet to get started",
+                    }}
+                    termsOfServiceUrl="https://tradefx.example.com/terms"
+                    privacyPolicyUrl="https://tradefx.example.com/privacy"
+                  />
+                </div>
               </div>
 
               {/* Circle User-Controlled Wallet Section */}
@@ -352,19 +314,19 @@ if (!address && !circleWalletConnected) {
                     lineHeight: "1.5",
                   }}
                 >
-                  Create a new user-controlled wallet with Circle or log in using your PIN
+                    Create a new user-controlled wallet with Circle or log in
+                    using your PIN
                 </p>
                 <CircleWalletAuth onSuccess={handleCircleWalletSuccess} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Outer margins are handled by padding + maxWidth on main containers */}
       </div>
     </div>
   );
 }
+
   // Show main app when wallet is connected
   return (
     <div className="App">
