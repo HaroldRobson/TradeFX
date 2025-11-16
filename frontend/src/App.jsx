@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import ExchangeChart from "./components/ExchangeChart";
 import OnrampPayment from "./components/OnrampPayment";
-import TradingInterface from "./components/TradingInterface";
+import OpenPosition from "./components/OpenPosition";
 import WalletAuth from "./components/WalletAuth";
 import CircleWalletAuth from "./components/CircleWalletAuth";
 import EurcUsdcTicker from "./components/EurcUsdcTicker";
@@ -197,7 +197,7 @@ function App() {
         {activeTab === "trade" && (
           <div className="trade-layout">
             <ExchangeChart />
-            <TradingInterface />
+            <OpenPosition />
           </div>
         )}
         {activeTab === "wallet" && <WalletAuth />}
