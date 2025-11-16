@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createChart, CrosshairMode, AreaSeries, CandlestickSeries } from "lightweight-charts";
+import {
+  createChart,
+  CrosshairMode,
+  AreaSeries,
+  CandlestickSeries,
+} from "lightweight-charts";
 
 // time window in seconds
 const TIMEFRAMES = {
@@ -122,7 +127,19 @@ const buildHistoryData = (rows, pair) => {
   return { line, candles };
 };
 
-const ExchangeChart = ({ compact = false }) => {
+const ExchangeChart = ({
+  compact = false,
+  // mode: "rate" shows FX rate, "position" shows position value over time
+  mode = "rate",
+  // In position mode, treat this as pos_token_amount
+  positionAmount = 1,
+  // Optional override for the chart title in position mode
+  positionLabel,
+  // Optional: in position mode, report the initial plotted value to the parent
+  onInitialValue,
+  // In position mode, earliest timestamp (seconds) to show on chart (position openedAt)
+  startTimestamp,
+}) => {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
@@ -135,7 +152,7 @@ const ExchangeChart = ({ compact = false }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [livePrice, setLivePrice] = useState(null);
+  const [livePrice, setLivePrice] = useState(null); // base FX rate
   const [wsStatus, setWsStatus] = useState("connecting");
 
   // ----- HISTORY LOAD (Kraken OHLC) -----
@@ -177,19 +194,53 @@ const ExchangeChart = ({ compact = false }) => {
     };
   }, [pair, timeframe]);
 
-  // ----- FILTER BY TIMEFRAME -----
+  const isPositionMode = mode === "position";
+
+  // ----- FILTER BY TIMEFRAME / START TIME AND SCALE TO POSITION VALUE IF NEEDED -----
   const filteredData = useMemo(() => {
     const seconds = TIMEFRAMES[timeframe];
-    if (!seconds) return history;
-
     const now = Math.floor(Date.now() / 1000);
-    const cutoff = now - seconds;
 
+    // ----- RATE MODE: respect timeframe window only -----
+    if (!isPositionMode) {
+      if (!seconds) return history;
+      const cutoff = now - seconds;
+      return {
+        line: history.line.filter((p) => p.time >= cutoff),
+        candles: history.candles.filter((c) => c.time >= cutoff),
+      };
+    }
+
+    // ----- POSITION MODE: clamp to max(openTime, timeframe window) -----
+    let minTime = startTimestamp || null;
+    if (seconds) {
+      const tfCutoff = now - seconds;
+      minTime = minTime != null ? Math.max(minTime, tfCutoff) : tfCutoff;
+    }
+
+    const base =
+      minTime != null
+        ? {
+            line: history.line.filter((p) => p.time >= minTime),
+            candles: history.candles.filter((c) => c.time >= minTime),
+          }
+        : history;
+
+    const mult = positionAmount || 0;
     return {
-      line: history.line.filter((p) => p.time >= cutoff),
-      candles: history.candles.filter((c) => c.time >= cutoff),
+      line: base.line.map((p) => ({
+        ...p,
+        value: p.value * mult,
+      })),
+      candles: base.candles.map((c) => ({
+        ...c,
+        open: c.open * mult,
+        high: c.high * mult,
+        low: c.low * mult,
+        close: c.close * mult,
+      })),
     };
-  }, [history, timeframe]);
+  }, [history, timeframe, isPositionMode, positionAmount, startTimestamp]);
 
   const latestValue = useMemo(() => {
     const series =
@@ -331,6 +382,10 @@ const ExchangeChart = ({ compact = false }) => {
           bottomColor: "rgba(37,99,235, 0.04)",
           lineColor: "#2563eb",
           lineWidth: 2,
+          // Remove built‑in "last value" price line & marker
+          lastValueVisible: false,
+          priceLineVisible: false,
+          crosshairMarkerVisible: false,
           // 🔽 4-decimal formatting on this series
           priceFormat: {
             type: "price",
@@ -347,6 +402,10 @@ const ExchangeChart = ({ compact = false }) => {
           borderUpColor: "#10b981",
           wickDownColor: "#ef4444",
           wickUpColor: "#10b981",
+          // Remove built‑in "last value" price line & marker
+          lastValueVisible: false,
+          priceLineVisible: false,
+          crosshairMarkerVisible: false,
           // 🔽 4-decimal formatting for candles too
           priceFormat: {
             type: "price",
@@ -360,6 +419,18 @@ const ExchangeChart = ({ compact = false }) => {
         series.setData(seriesData);
         seriesRef.current = series;
         chart.timeScale().fitContent();
+
+        // Report the initial value back to the parent when in position mode,
+        // so the "Start value" display can match the chart.
+        if (mode === "position" && typeof onInitialValue === "function") {
+          const first =
+            chartType === "line"
+              ? seriesData[0]?.value
+              : seriesData[0]?.open;
+          if (first != null && Number.isFinite(first)) {
+            onInitialValue(first);
+          }
+        }
       }
     } catch (error) {
       console.error("Error adding series to chart:", error);
@@ -509,26 +580,26 @@ const ExchangeChart = ({ compact = false }) => {
   const formatPairLabel =
     pair === "USDC_EURC" ? "USDC / EURC" : "EURC / USDC";
 
-  const displayPrice =
-    livePrice != null
-      ? livePrice
-      : latestValue != null
-        ? latestValue
-        : null;
+  const headerTitle = isPositionMode
+    ? positionLabel || "Position value"
+    : formatPairLabel;
 
-  const wsDotColor =
-    wsStatus === "live"
-      ? "#22c55e"
-      : wsStatus === "connecting"
-        ? "#f97316"
-        : "#ef4444";
+  const displayPrice = useMemo(() => {
+    if (livePrice != null) {
+      return isPositionMode ? livePrice * positionAmount : livePrice;
+    }
+    if (latestValue != null) return latestValue;
+    return null;
+  }, [livePrice, latestValue, isPositionMode, positionAmount]);
 
   return (
     <div className={`exchange-chart ${compact ? "compact" : ""}`}>
       <div className="chart-header">
         <div>
-          <p className="chart-label">Exchange Rate</p>
-          <h3 className="chart-title">{formatPairLabel}</h3>
+          <p className="chart-label">
+            {isPositionMode ? "Live position value" : "Exchange Rate"}
+          </p>
+          <h3 className="chart-title">{headerTitle}</h3>
           {displayPrice && (
             <p className="chart-price">
               {displayPrice.toFixed(4)}{" "}
@@ -539,17 +610,6 @@ const ExchangeChart = ({ compact = false }) => {
                   color: "#6b7280",
                 }}
               >
-                <span
-                  style={{
-                    display: "inline-block",
-                    width: 8,
-                    height: 8,
-                    borderRadius: "999px",
-                    marginRight: 4,
-                    background: wsDotColor,
-                    boxShadow: `0 0 8px ${wsDotColor}`,
-                  }}
-                />
                 {wsStatus === "live"
                   ? "Live via Kraken (USDC/EUR proxy)"
                   : wsStatus === "connecting"
@@ -560,19 +620,6 @@ const ExchangeChart = ({ compact = false }) => {
           )}
         </div>
         <div className="chart-controls">
-          {/* Pair toggle */}
-          <div className="control-group">
-            {CURRENCY_PAIRS.map((pairOption) => (
-              <button
-                key={pairOption.value}
-                className={pair === pairOption.value ? "active" : ""}
-                onClick={() => setPair(pairOption.value)}
-              >
-                {pairOption.label}
-              </button>
-            ))}
-          </div>
-
           {/* Timeframe buttons */}
           <div className="control-group">
             {TIMEFRAME_OPTIONS.map((tf) => (
