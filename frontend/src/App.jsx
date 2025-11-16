@@ -8,6 +8,7 @@ import WalletAuth from "./components/WalletAuth";
 import CircleWalletAuth from "./components/CircleWalletAuth";
 import EurcUsdcTicker from "./components/EurcUsdcTicker";
 import BridgeInterface from "./components/BridgeInterface";
+import ProvideLiquidity from "./components/LiquidityProvider";
 import logo from "./assets/logo.svg";
 
 function App() {
@@ -256,6 +257,13 @@ if (!address && !circleWalletConnected) {
         >
           Buy Crypto
         </button>
+        <button
+          className={activeTab === "liquidity" ? "active" : ""}
+          onClick={() => setActiveTab("liquidity")}
+        >
+          Trade Liquidity Tokens
+        </button>
+
       </nav>
       <main className="content">
         {activeTab === "trade" && (
@@ -267,6 +275,7 @@ if (!address && !circleWalletConnected) {
         {activeTab === "wallet" && <WalletAuth />}
         {activeTab === "bridge" && <BridgeInterface />}
         {activeTab === "onramp" && <OnrampPayment />}
+        {activeTab === "liquidity" && <ProvideLiquidity/>}
       </main>
     </div>
   );

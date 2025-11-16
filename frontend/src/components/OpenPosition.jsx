@@ -150,6 +150,7 @@ console.log("EURC address:", import.meta.env.VITE_EURC_ADDRESS);
     // So: FakeRate = ticker.ask * 1,000,000
     const fakeRate = Math.floor(1000000 / ticker.ask);
 
+
     console.log("Opening position with:", {
       startTokenAddress,
       collateral: collateral.toString(),
