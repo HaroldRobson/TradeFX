@@ -21,7 +21,7 @@ const OnrampPayment = () => {
 
     try {
       const arcUrl = `https://buy.arc.market/?` + new URLSearchParams({
-        apiKey: import.meta.env.VITE_ARC_API_KEY || 'demo',
+        apiKey: import.meta.env.VITE_ARC_API_KEY,
         targetChainId: '1',
         targetAsset: 'USDT',
         sourceAmount: amount,

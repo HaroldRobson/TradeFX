@@ -23,8 +23,8 @@ const TOKENS = [
 const BridgeInterface = () => {
   const address = useAddress();
   const wallet = useWallet();
-  const [sourceChain, setSourceChain] = useState(Blockchain.Ethereum_Sepolia);
-  const [token, setToken] = useState("USDC");
+  const [sourceChain, setSourceChain] = useState("");
+  const [token, setToken] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,13 +32,13 @@ const BridgeInterface = () => {
   const [bridgeResult, setBridgeResult] = useState(null);
   const [circleWalletAddress, setCircleWalletAddress] = useState(null);
 
-  // Check for Circle wallet address from localStorage
+  // Check this circlewalletaddress stuff
   useEffect(() => {
     const circleWalletId = localStorage.getItem("circleWalletId");
     if (circleWalletId && !address) {
       // For Circle wallets, we'd need to fetch the address from the API
       // This is a placeholder - you'd need to implement API call to get wallet address
-      setCircleWalletAddress("Circle Wallet Connected");
+      setCircleWalletAddress("Circle Wallet Connected"); 
     }
   }, [address]);
 
