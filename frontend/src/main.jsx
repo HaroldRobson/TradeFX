@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThirdwebProvider
       clientId={import.meta.env.VITE_THIRDWEB_CLIENT_ID}
-      activeChain="ethereum"
+      activeChain="ethereum" // WHY DOES IT SAY ETHEREUM???
     >
       <App />
     </ThirdwebProvider>
