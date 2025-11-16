@@ -5,7 +5,7 @@ import uuid
 
 import requests
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 BASE_URL = "https://api.circle.com/v1/w3s"
 CIRCLE_API_KEY = os.getenv("CIRCLE_API_KEY")
@@ -30,7 +30,7 @@ def _headers() -> dict[str, str]:
 
 
 class EmailTokenRequest(BaseModel):
-    email: str
+    email: EmailStr
 
 
 @router.post("/email/token")
@@ -47,7 +47,7 @@ def email_token(req: EmailTokenRequest):
 
 
 class EmailVerifyRequest(BaseModel):
-    otp: str
+    otp: str = Field(min_length=6, max_length=8)
     otpToken: str
     deviceToken: str
 

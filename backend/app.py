@@ -12,11 +12,11 @@ from pydantic import BaseModel, Field
 from auth import router as auth_router
 
 BASE_URL = "https://api.circle.com/v1/w3s"
-CIRCLE_API_KEY = os.getenv("CIRCLE_API_KEY")
+VITE_CIRCLE_API_KEY = os.getenv("VITE_CIRCLE_API_KEY")
 CIRCLE_APP_ID = os.getenv("CIRCLE_APP_ID")
 DEFAULT_BLOCKCHAINS = ["SOL-DEVNET"]
 
-app = FastAPI(title="TradeFX Circle Backend", version="1.0.0")
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,7 +46,7 @@ def _blockchains(blockchains: Optional[List[str]]) -> List[str]:
 
 def _headers(extra: Optional[dict[str, str]] = None) -> dict[str, str]:
     headers = {
-        "Authorization": f"Bearer {_require_env(CIRCLE_API_KEY, 'CIRCLE_API_KEY')}",
+        "Authorization": f"Bearer {_require_env(VITE_CIRCLE_API_KEY, 'VITE_CIRCLE_API_KEY')}",
         "Content-Type": "application/json",
     }
     if extra:
@@ -122,7 +122,7 @@ class CreateWalletResponse(BaseModel):
 def health():
     return {
         "status": "ok",
-        "hasApiKey": bool(CIRCLE_API_KEY),
+        "hasApiKey": bool(VITE_CIRCLE_API_KEY),
         "hasAppId": bool(CIRCLE_APP_ID),
     }
 
