@@ -72,40 +72,71 @@ const CircleWalletAuth = ({ onSuccess }) => {
     }
   };
 
-  // Create session using Circle API
-  const createSession = async (userId) => {
+  // Request email token
+  const requestEmailToken = async () => {
     const apiKey = getApiKey();
-    try {
-      const response = await fetch("https://api.circle.com/v1/w3s/user/sessions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId }),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to create session: ${response.status}`);
-      }
+    const email = window.prompt("Enter your email:");
+    if (!email) throw new Error("No email provided");
 
-      const data = await response.json();
-      return {
-        userToken: data.data?.userToken,
-        encryptionKey: data.data?.encryptionKey,
-      };
-    } catch (err) {
-      console.error("Error creating session:", err);
-      throw err;
+    const idempotencyKey = `${Date.now()}-${Math.random()}`;
+    const deviceId = crypto.randomUUID();
+
+    const resp = await fetch("http://127.0.0.1:8000/auth/email/token", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,          // REQUIRED
+        idempotencyKey,
+        deviceId
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to request email token");
     }
+
+    return {
+      email,
+      deviceId,
+      ...(await resp.json()).data
+    };
+  };
+
+  const verifyEmailOtp = async (otp, otpToken, deviceToken) => {
+    const apiKey = getApiKey();
+
+    const resp = await fetch("http://127.0.0.1:8000/auth/email/verify", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        otp,
+        otpToken,
+        deviceToken
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || "OTP verification failed");
+    }
+
+    return (await resp.json()).data;
+    // RETURNS { userToken, encryptionKey }
   };
 
   // Initialize user account and create wallet using Circle API
   const initializeUser = async (userToken, blockchains = ["ETH"]) => {
     const apiKey = getApiKey();
     const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    
+
     try {
       const response = await fetch("https://api.circle.com/v1/w3s/user/initialize", {
         method: "POST",
@@ -309,7 +340,39 @@ const CircleWalletAuth = ({ onSuccess }) => {
 
   // Handle Email authentication
   const handleEmailAuth = async () => {
-    await handleWalletInit("email");
+    setAuthMethod("email");
+    setLoading(true);
+    setError("");
+    setStatus("Requesting email login...");
+
+    try {
+      // Step 1: request email login token
+      const { deviceToken, deviceEncryptionKey, otpToken } = await requestEmailToken();
+
+      // SIMPLE OTP PROMPT (replace with modal later)
+      const otp = window.prompt("Enter the 6-digit code sent to your email:");
+      if (!otp) throw new Error("OTP input cancelled");
+
+      // Step 2: verify OTP → get userToken + encryptionKey
+      setStatus("Verifying email code...");
+      const { userToken, encryptionKey } = await verifyEmailOtp(
+        otp,
+        otpToken,
+        deviceToken
+      );
+
+      // Step 3: SDK setup + wallet creation
+      setStatus("Setting up wallet...");
+      const appId = await getAppId();
+      await initializeSDK(appId, userToken, encryptionKey);
+      await handleWalletCreation(userToken, encryptionKey);
+
+    } catch (err) {
+      console.error("Email auth error:", err);
+      setError(err.message || "Email authentication failed.");
+    }
+
+    setLoading(false);
   };
 
   // Handle social login
