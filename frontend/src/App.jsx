@@ -4,10 +4,11 @@ import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import ExchangeChart from "./components/ExchangeChart";
 import OnrampPayment from "./components/OnrampPayment";
-import TradingInterface from "./components/TradingInterface";
+import OpenPosition from "./components/OpenPosition";
 import WalletAuth from "./components/WalletAuth";
 import CircleWalletAuth from "./components/CircleWalletAuth";
 import BridgeInterface from "./components/BridgeInterface";
+import ProvideLiquidity from "./components/LiquidityProvider";
 import ExistingPositions from "./components/ExistingPositions";
 import PositionDetail from "./components/PositionDetail";
 
@@ -344,6 +345,60 @@ function App() {
           privacyPolicyUrl="https://tradefx.example.com/privacy"
         />
       </header>
+      <nav className="tabs">
+        <button
+          className={activeTab === "trade" ? "active" : ""}
+          onClick={() => setActiveTab("trade")}
+        >
+          Trade
+        </button>
+        <button
+         className={activeTab === "positions" ? "active" : ""}
+          onClick={() => setActiveTab("positions")}
+        >
+                  Positions
+                </button>
+        <button
+          className={activeTab === "wallet" ? "active" : ""}
+          onClick={() => setActiveTab("wallet")}
+        >
+          Wallet
+        </button>
+        <button
+          className={activeTab === "bridge" ? "active" : ""}
+          onClick={() => setActiveTab("bridge")}
+        >
+          Bridge to Arc
+        </button>
+        <button
+          className={activeTab === "onramp" ? "active" : ""}
+          onClick={() => setActiveTab("onramp")}
+        >
+          Buy Crypto
+        </button>
+        <button
+          className={activeTab === "liquidity" ? "active" : ""}
+          onClick={() => setActiveTab("liquidity")}
+        >
+          Trade Liquidity Tokens
+        </button>
+
+      </nav>
+      <main className="content">
+        {activeTab === "trade" && (
+          <div className="trade-layout">
+            <ExchangeChart />
+            <OpenPosition />
+          </div>
+        )}
+        {activeTab === "wallet" && <WalletAuth />}
+        {activeTab === "bridge" && <BridgeInterface />}
+        {activeTab === "onramp" && <OnrampPayment />}
+        {activeTab === "liquidity" && <ProvideLiquidity/>}
+        {activeTab === "positions" && (
+                  <ExistingPositions positions={positions} />
+                )}
+      </main>
 
       <Routes>
         <Route
