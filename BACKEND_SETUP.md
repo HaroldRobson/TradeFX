@@ -9,10 +9,12 @@ See [backend/README.md](./backend/README.md) for detailed setup instructions.
 **Quick start:**
 ```bash
 cd backend
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 export CIRCLE_API_KEY="your-key"
 export CIRCLE_APP_ID="your-app-id"
-python app.py
+uvicorn app:app --reload --port 8000
 ```
 
 ## Required Environment Variables
@@ -24,19 +26,28 @@ python app.py
 
 The backend provides the following endpoints:
 
-1. **GET `/api/circle/get-app-id`**
+1. **GET `/api/health`**
+   - Simple health check and environment readiness indicator.
+
+2. **GET `/api/circle/get-app-id`**
    - Returns: `{ "appId": "your-app-id" }`
-   - Used for social login initialization
+   - Used for social login initialization.
 
-2. **POST `/api/circle/initialize-wallet`**
-   - Body: `{ "method": "pin" | "email" }`
+3. **POST `/api/circle/initialize-wallet`**
+   - Body: `{ "method": "pin", "blockchains": ["SOL-DEVNET"], ... }`
    - Returns: `{ "appId": "...", "userToken": "...", "encryptionKey": "...", "challengeId": "..." }`
-   - Creates user, session, and initializes wallet
+   - Creates user, session, and initializes wallet.
 
-3. **POST `/api/circle/create-wallet`**
+4. **POST `/api/circle/create-wallet`**
    - Body: `{ "userToken": "..." }`
    - Returns: `{ "challengeId": "..." }`
-   - Creates wallet challenge for existing user (after social login)
+   - Creates wallet challenge for existing user (after social login).
+
+5. **POST `/auth/email/token`**
+   - Proxy to Circle's email token endpoint (used by the frontend email login).
+
+6. **POST `/auth/email/verify`**
+   - Proxy to Circle's email verify endpoint.
 
 ## Frontend Integration
 
