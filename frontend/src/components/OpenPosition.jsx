@@ -148,7 +148,7 @@ console.log("EURC address:", import.meta.env.VITE_EURC_ADDRESS);
     // ticker.ask is EURC/USDC (how many USDC per EURC)
     // FakeRate = how many DOLLARS (USDC) a million EUROS (EURC) could buy
     // So: FakeRate = ticker.ask * 1,000,000
-    const fakeRate = Math.floor(ticker.ask * 1000000);
+    const fakeRate = Math.floor(1000000 / ticker.ask);
 
     console.log("Opening position with:", {
       startTokenAddress,
