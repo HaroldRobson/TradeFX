@@ -150,183 +150,183 @@ function App() {
   if (!address && !circleWalletConnected) {
     return (
       <div className="App">
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          padding: "2rem",
-          backgroundColor: "#f5f5f5",
-          gap: "2rem",
-        }}
-      >
-        {/* Logo and Title Section - ~20% height */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            height: "20vh",
-            gap: "1.5rem",
-            margin: "0 auto",
-            width: "100%",
-            maxWidth: "1400px",
-          }}
-        >
-          <img
-            src={logo}
-            alt="TradeFX Logo"
-            style={{
-              height: "100%",
-              width: "auto",
-              objectFit: "contain",
-            }}
-          />
-          <h1
-            style={{
-              color: "#1a1a1a",
-              fontSize: "4rem",
-              margin: 0,
-              fontWeight: "700",
-            }}
-          >
-            TradeFX
-          </h1>
-        </div>
-
-          {/* Main Content Section */}
-        <div
-          style={{
-            display: "flex",
-              // height: "60vh",           // ⬅ remove this line
+            flexDirection: "column",
+            minHeight: "100vh",
+            padding: "2rem",
+            backgroundColor: "#f5f5f5",
             gap: "2rem",
-            margin: "0 auto",
-            width: "100%",
-            maxWidth: "1400px",
-              alignItems: "flex-start",    // ⬅ add this for top alignment
           }}
         >
-          {/* Left Side - ExchangeChart (60% width) */}
+          {/* Logo and Title Section - ~20% height */}
           <div
             style={{
-              flex: "0 0 60%",
-              backgroundColor: "white",
-              borderRadius: "16px",
-              padding: "2rem",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              height: "20vh",
+              gap: "1.5rem",
+              margin: "0 auto",
+              width: "100%",
+              maxWidth: "1400px",
             }}
           >
-              <ExchangeChart compact />
+            <img
+              src={logo}
+              alt="TradeFX Logo"
+              style={{
+                height: "100%",
+                width: "auto",
+                objectFit: "contain",
+              }}
+            />
+            <h1
+              style={{
+                color: "#1a1a1a",
+                fontSize: "4rem",
+                margin: 0,
+                fontWeight: "700",
+              }}
+            >
+              TradeFX
+            </h1>
           </div>
 
-          {/* Right Side - Sign In Options (30% width) */}
+          {/* Main Content Section */}
           <div
             style={{
-              flex: "0 0 30%",
-              backgroundColor: "white",
-              borderRadius: "16px",
-              padding: "2rem",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
               display: "flex",
-              flexDirection: "column",
+              // height: "60vh",           // ⬅ remove this line
+              gap: "2rem",
+              margin: "0 auto",
+              width: "100%",
+              maxWidth: "1400px",
+              alignItems: "flex-start",    // ⬅ add this for top alignment
             }}
           >
-            <h2
-              style={{
-                marginBottom: "1.5rem",
-                color: "#1a1a1a",
-                fontSize: "1.7rem",
-                fontWeight: "600",
-                textAlign: "center",
-              }}
-            >
-              Log in via:
-            </h2>
-
-            {/* Wallet Connection Options - stacked column */}
+            {/* Left Side - ExchangeChart (60% width) */}
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "2rem",
-                flex: 1,
+                flex: "0 0 60%",
+                backgroundColor: "white",
+                borderRadius: "16px",
+                padding: "2rem",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                overflow: "hidden",
               }}
             >
-              {/* Thirdweb Connect Wallet Section */}
-              <div>
-                <h3
-                  style={{
-                    marginBottom: "0.2rem",
-                    color: "#1a1a1a",
-                    fontSize: "1.125rem",
-                    fontWeight: "600",
-                  }}
-                >
-                  Thirdweb
-                </h3>
-                <p
-                  style={{
-                    marginBottom: "1rem",
-                    color: "#666",
-                    fontSize: "0.875rem",
-                    lineHeight: "1.5",
-                  }}
-                >
-                  Connect using MetaMask, WalletConnect, or other Web3 wallets
-                </p>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",  // center horizontally
-                  }}
-                >
-                  <ConnectWallet
-                    theme="light"
-                    btnTitle="Connect Wallet"
-                    modalTitle="Sign In to Trade FX"
-                    modalSize="wide"
-                    welcomeScreen={{
-                      title: "Welcome to Trade FX",
-                      subtitle: "Connect your wallet to get started",
-                    }}
-                    termsOfServiceUrl="https://tradefx.example.com/terms"
-                    privacyPolicyUrl="https://tradefx.example.com/privacy"
-                  />
-                </div>
-              </div>
+              <ExchangeChart compact />
+            </div>
 
-              {/* Circle User-Controlled Wallet Section */}
-              <div>
-                <h3
-                  style={{
-                    marginBottom: "0.75rem",
-                    color: "#1a1a1a",
-                    fontSize: "1.125rem",
-                    fontWeight: "600",
-                  }}
-                >
-                  Circle Wallet
-                </h3>
-                <p
-                  style={{
-                    marginBottom: "1rem",
-                    color: "#666",
-                    fontSize: "0.875rem",
-                    lineHeight: "1.5",
-                  }}
-                >
+            {/* Right Side - Sign In Options (30% width) */}
+            <div
+              style={{
+                flex: "0 0 30%",
+                backgroundColor: "white",
+                borderRadius: "16px",
+                padding: "2rem",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <h2
+                style={{
+                  marginBottom: "1.5rem",
+                  color: "#1a1a1a",
+                  fontSize: "1.7rem",
+                  fontWeight: "600",
+                  textAlign: "center",
+                }}
+              >
+                Log in via:
+              </h2>
+
+              {/* Wallet Connection Options - stacked column */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2rem",
+                  flex: 1,
+                }}
+              >
+                {/* Thirdweb Connect Wallet Section */}
+                <div>
+                  <h3
+                    style={{
+                      marginBottom: "0.2rem",
+                      color: "#1a1a1a",
+                      fontSize: "1.125rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Thirdweb
+                  </h3>
+                  <p
+                    style={{
+                      marginBottom: "1rem",
+                      color: "#666",
+                      fontSize: "0.875rem",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    Connect using MetaMask, WalletConnect, or other Web3 wallets
+                  </p>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",  // center horizontally
+                    }}
+                  >
+                    <ConnectWallet
+                      theme="light"
+                      btnTitle="Connect Wallet"
+                      modalTitle="Sign In to Trade FX"
+                      modalSize="wide"
+                      welcomeScreen={{
+                        title: "Welcome to Trade FX",
+                        subtitle: "Connect your wallet to get started",
+                      }}
+                      termsOfServiceUrl="https://tradefx.example.com/terms"
+                      privacyPolicyUrl="https://tradefx.example.com/privacy"
+                    />
+                  </div>
+                </div>
+
+                {/* Circle User-Controlled Wallet Section */}
+                <div>
+                  <h3
+                    style={{
+                      marginBottom: "0.75rem",
+                      color: "#1a1a1a",
+                      fontSize: "1.125rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Circle Wallet
+                  </h3>
+                  <p
+                    style={{
+                      marginBottom: "1rem",
+                      color: "#666",
+                      fontSize: "0.875rem",
+                      lineHeight: "1.5",
+                    }}
+                  >
                     Create a new user-controlled wallet with Circle or log in
                     using your PIN
-                </p>
-                <CircleWalletAuth onSuccess={handleCircleWalletSuccess} />
+                  </p>
+                  <CircleWalletAuth onSuccess={handleCircleWalletSuccess} />
                 </div>
               </div>
             </div>
           </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // Show main app when wallet is connected
   return (
@@ -345,60 +345,7 @@ function App() {
           privacyPolicyUrl="https://tradefx.example.com/privacy"
         />
       </header>
-      <nav className="tabs">
-        <button
-          className={activeTab === "trade" ? "active" : ""}
-          onClick={() => setActiveTab("trade")}
-        >
-          Trade
-        </button>
-        <button
-         className={activeTab === "positions" ? "active" : ""}
-          onClick={() => setActiveTab("positions")}
-        >
-                  Positions
-                </button>
-        <button
-          className={activeTab === "wallet" ? "active" : ""}
-          onClick={() => setActiveTab("wallet")}
-        >
-          Wallet
-        </button>
-        <button
-          className={activeTab === "bridge" ? "active" : ""}
-          onClick={() => setActiveTab("bridge")}
-        >
-          Bridge to Arc
-        </button>
-        <button
-          className={activeTab === "onramp" ? "active" : ""}
-          onClick={() => setActiveTab("onramp")}
-        >
-          Buy Crypto
-        </button>
-        <button
-          className={activeTab === "liquidity" ? "active" : ""}
-          onClick={() => setActiveTab("liquidity")}
-        >
-          Trade Liquidity Tokens
-        </button>
 
-      </nav>
-      <main className="content">
-        {activeTab === "trade" && (
-          <div className="trade-layout">
-            <ExchangeChart />
-            <OpenPosition />
-          </div>
-        )}
-        {activeTab === "wallet" && <WalletAuth />}
-        {activeTab === "bridge" && <BridgeInterface />}
-        {activeTab === "onramp" && <OnrampPayment />}
-        {activeTab === "liquidity" && <ProvideLiquidity/>}
-        {activeTab === "positions" && (
-                  <ExistingPositions positions={positions} />
-                )}
-      </main>
 
       <Routes>
         <Route
@@ -411,6 +358,12 @@ function App() {
                   onClick={() => setActiveTab("trade")}
                 >
                   Trade
+                </button>
+                <button
+                  className={activeTab === "positions" ? "active" : ""}
+                  onClick={() => setActiveTab("positions")}
+                >
+                  Positions
                 </button>
                 <button
                   className={activeTab === "wallet" ? "active" : ""}
@@ -431,22 +384,23 @@ function App() {
                   Buy Crypto
                 </button>
                 <button
-                  className={activeTab === "positions" ? "active" : ""}
-                  onClick={() => setActiveTab("positions")}
+                  className={activeTab === "liquidity" ? "active" : ""}
+                  onClick={() => setActiveTab("liquidity")}
                 >
-                  Positions
+                  Trade Liquidity Tokens
                 </button>
               </nav>
               <main className="content">
                 {activeTab === "trade" && (
                   <div className="trade-layout">
                     <ExchangeChart />
-                    <TradingInterface />
+                    <OpenPosition />
                   </div>
                 )}
                 {activeTab === "wallet" && <WalletAuth />}
                 {activeTab === "bridge" && <BridgeInterface />}
                 {activeTab === "onramp" && <OnrampPayment />}
+                {activeTab === "liquidity" && <ProvideLiquidity />}
                 {activeTab === "positions" && (
                   <ExistingPositions positions={positions} />
                 )}
